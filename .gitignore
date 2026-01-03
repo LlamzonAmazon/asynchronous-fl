@@ -1,0 +1,9 @@
+# Data
+/PTB-XL
+
+# Environment
+.env
+/venv
+
+# Testing Configurations
+.vscode
