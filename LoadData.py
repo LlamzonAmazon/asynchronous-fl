@@ -20,15 +20,14 @@ class PTBXLDataset:
             data_path: Path to PTB-XL dataset directory
         """
         self.data_path = Path(data_path)
-        self.sampling_rate = 100  # Use 100Hz version for efficiency
+        self.sampling_rate = 100  # Using 100Hz version for efficiency
         
         if not self.data_path.exists():
             print(f"Dataset not found at {self.data_path}")
-            print("Download from: https://physionet.org/content/ptb-xl/1.0.3/")
-            print("Or run: wget -r -N -c -np https://physionet.org/files/ptb-xl/1.0.3/")
     
     def load_raw_data(self) -> pd.DataFrame:
-        """Load the metadata CSV file"""
+        """Load metadata CSV"""
+
         metadata_path = self.data_path / 'ptbxl_database.csv'
         print(f"Loading metadata from {metadata_path}")
         
@@ -39,7 +38,8 @@ class PTBXLDataset:
         return df
     
     def load_signal(self, filename: str) -> np.ndarray:
-        """Load a single ECG signal"""
+        """Load one ECG signal"""
+
         record_path = self.data_path / filename
         record = wfdb.rdsamp(str(record_path.with_suffix('')))
         signal = record[0]  # Extract signal data
@@ -47,6 +47,7 @@ class PTBXLDataset:
     
     def aggregate_diagnostic_labels(self, df: pd.DataFrame) -> pd.DataFrame:
         """Convert detailed SCP codes to superclass labels"""
+
         # Load SCP statement definitions
         agg_df = pd.read_csv(self.data_path / 'scp_statements.csv', index_col=0)
         agg_df = agg_df[agg_df.diagnostic == 1]
@@ -74,6 +75,7 @@ class PTBXLDataset:
         Returns:
             X_train, y_train, X_test, y_test
         """
+
         print(f"\nPreparing data for superclass: {superclass}")
         
         # Load metadata
@@ -81,21 +83,23 @@ class PTBXLDataset:
         df = self.aggregate_diagnostic_labels(df)
         
         # Create binary labels
+        # 1 (positive): ECG has NORM (normal heart)
+        # 0 (negative): ECG does not have NORM (abnormal heart)
         df['target'] = df.diagnostic_superclass.apply(lambda x: 1 if superclass in x else 0)
         
         # Split by standard folds
         train_df = df[df.strat_fold != test_fold]
         test_df = df[df.strat_fold == test_fold]
         
-        print(f"Train samples: {len(train_df)} (positive: {train_df.target.sum()})")
-        print(f"Test samples: {len(test_df)} (positive: {test_df.target.sum()})")
+        print(f"TRAINING samples: {len(train_df)} (positive: {train_df.target.sum()})")
+        print(f"TESTING samples: {len(test_df)} (positive: {test_df.target.sum()})")
         
         # Load signals
-        print("Loading training signals...")
+        print("Loading TRAINING signals...")
         X_train = np.array([self.load_signal(f) for f in train_df.filename_hr])
         y_train = train_df.target.values
         
-        print("Loading test signals...")
+        print("Loading TESTING signals...")
         X_test = np.array([self.load_signal(f) for f in test_df.filename_hr])
         y_test = test_df.target.values
         
@@ -104,18 +108,24 @@ class PTBXLDataset:
     
     def get_available_superclasses(self) -> List[str]:
         """Get list of available diagnostic superclasses"""
+
         df = self.load_raw_data()
         df = self.aggregate_diagnostic_labels(df)
         
         all_classes = set()
         for classes in df.diagnostic_superclass:
             all_classes.update(classes)
+
+        # NORM:     Normal ECG
+        # MI:       Myocardial infarction (Abnormal heath repolarization patterns)
+        # STTC:     ST-T wave abnormality (Abnormal ST segment and T wave on an ECG)
+        # CD:       Cardiac dysrhythmia (Abnormal heart rhythm)
+        # HYP:      Hypertrophy (Abnormal heart chamber thickness)
         
         return sorted(list(all_classes))
 
 
-def test_data_loading():
-    """Test the data loader"""
+def main():
     print("=" * 60)
     print("PTB-XL Data Loader Test")
     print("=" * 60)
@@ -135,7 +145,14 @@ def test_data_loading():
     print("=" * 60)
     
     X_train, y_train, X_test, y_test = dataset.prepare_data(
+        # Using NORM as the superclass
         superclass='NORM',
+
+        # Using fold=10 as it is the standard train/test split by the dataset authors
+        # Folds 1-9 are used for model training, fold 10 is used for model evaluation (testing)
+        # Dataset is folded like this to support different experimental and training setups
+        # Each fold has 44% NORM and 56% abnormal (non-NORM) labels 
+        # GOOD class balance for classification training; each fold is representative of the dataset
         test_fold=10
     )
     
@@ -145,15 +162,24 @@ def test_data_loading():
     print(f"Training set: {X_train.shape}")
     print(f"  - Signal length: {X_train.shape[1]} samples")
     print(f"  - Number of leads: {X_train.shape[2]} leads")
-    print(f"  - Class balance: {y_train.sum()} positive / {len(y_train) - y_train.sum()} negative")
+
+    # Class balance
+    Training_Normal_count = y_train.sum()
+    Training_Abnormal_count = len(y_train) - y_train.sum()
+    print(f"  - Class balance: {Training_Normal_count} normal / {Training_Abnormal_count} abnormal => {Training_Normal_count / len(y_train) * 100:.1f}%-{Training_Abnormal_count / len(y_train) * 100:.1f}%")
+    
+    Testing_Normal_count = y_test.sum()
+    Testing_Abnormal_count = len(y_test) - y_test.sum()
     print(f"\nTest set: {X_test.shape}")
-    print(f"  - Class balance: {y_test.sum()} positive / {len(y_test) - y_test.sum()} negative")
+    print(f"  - Class balance: {Testing_Normal_count} normal / {Testing_Abnormal_count} abnormal => {Testing_Normal_count / len(y_test) * 100:.1f}%-{Testing_Abnormal_count / len(y_test) * 100:.1f}%")
     
     print("\n" + "=" * 60)
     print("DATA LOADED SUCCESSFULLY.")
+    print("=" * 60)
+
     return X_train, y_train, X_test, y_test
 
 
 if __name__ == "__main__":
     # Run test
-    X_train, y_train, X_test, y_test = test_data_loading()
+    X_train, y_train, X_test, y_test = main()
