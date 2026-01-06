@@ -2,7 +2,7 @@
 
 This is the codebase for my thesis, titled: 
 
-***Applying Asynchronous Weight-Updating in Federated Learning Networks for IoT Health Devices***
+***Applying Asynchronous Weight-Updating to Federated Learning Neural Networks for IoT Healthcare Devices***
 
 Traditional Federated Learning neural networks are slow and inefficient because clients naively send parameter updates synchronously to the global model. Clients send shallow-layer and deep-layer updates in every training round, which results in unnecessary network overhead. The drawbacks of this inefficiency is especially prevalent in healthcare IoT devices with limited computational capacity, and must devote the most computational power possible towards detecting health anomalies.
 
