@@ -11,13 +11,42 @@ This project aims to reduce network overhead and computational strain on healthc
 ## Data
 This project uses [*PTB-XL, a large publicly available electrocardiography dataset*](https://physionet.org/content/ptb-xl/1.0.3/) from *PhysioNet*.
 
-
-
 ## Modules
 - PyTorch
 - NumPy
 - Pandas
 - Matplotlib
+
+## Structure
+```
+asynchronous-fl/
+├── .vscode/                        # configs for code debugging 
+├── centralized/
+│   ├── config.py                   # training configurations
+│   └── train.py                    # trains ECG CNN model on PTB-XL 
+│
+├── experiments/
+│   ├── TBD
+│
+├── federated/
+│   ├── TBD
+│
+├── models/
+│   ├── ecg_cnn.py                  # CNN model on PTB-XL (centralized baseline)
+│
+├── PTB-XL/                         # PTB-XL dataset from PhysioNet (.gitignore'd)
+│
+├── results/                        # model results (.gitignore'd)
+│   ├── async-federated/            # To compare to baseline results
+│   ├── centralized/                # Baseline
+│   └── sync-federated/             # Baseline
+│
+├── venv/                           # virtual environment (.gitignore'd)
+├── .gitignore
+├── LoadData.py
+├── REAMDE.md
+├── requirements.txt                # dependencies
+```
 
 ## Author
 **Thomas Llamzon** – Honours Computer Science at Western University
