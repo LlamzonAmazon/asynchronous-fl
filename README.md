@@ -11,11 +11,13 @@ This project aims to reduce network overhead and computational strain on healthc
 ## Data
 This project uses [*PTB-XL, a large publicly available electrocardiography dataset*](https://physionet.org/content/ptb-xl/1.0.3/) from *PhysioNet*.
 
+
+
 ## Modules
 - PyTorch
-- scikit-learn
-- pandas
-- 
+- NumPy
+- Pandas
+- Matplotlib
 
 ## Author
-**Thomas Llamzon** – Honours Computer Science at Western University
+**Thomas Llamzon** – Honours Computer Science at Western University

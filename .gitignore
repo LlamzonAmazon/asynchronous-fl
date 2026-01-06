@@ -7,3 +7,15 @@
 
 # Testing Configurations
 .vscode
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Results
+/results/
+*.png
+*.pth
