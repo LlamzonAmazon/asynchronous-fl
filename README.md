@@ -22,30 +22,38 @@ This project uses [*PTB-XL, a large publicly available electrocardiography datas
 asynchronous-fl/
 ├── .vscode/                        # configs for code debugging 
 ├── centralized/
-│   ├── config.py                   # training configurations
+│   ├── config.py                   # training configs
 │   └── train.py                    # trains ECG CNN model on PTB-XL 
 │
 ├── experiments/
 │   ├── TBD
 │
 ├── federated/
-│   ├── TBD
+│   ├── synchronous/
+│   │   ├── config.py               # training configs
+│   │   ├── partition.py            # data partitioning for FL
+│   │   ├── flower_client.py        # client training
+│   │   ├── flower_server.py        # server training
+│   │   └── train.py                # trains ECG CNN model on PTB-XL 
+│   │ 
+│   └── asynchronous/
+│       ├── TBD
 │
 ├── models/
 │   ├── ecg_cnn.py                  # CNN model on PTB-XL (centralized baseline)
 │
 ├── PTB-XL/                         # PTB-XL dataset from PhysioNet (.gitignore'd)
 │
-├── results/                        # model results (.gitignore'd)
-│   ├── async-federated/            # To compare to baseline results
-│   ├── centralized/                # Baseline
-│   └── sync-federated/             # Baseline
+├── results/
+│   ├── async-federated/            # Experimental results
+│   ├── centralized/                # Baseline results
+│   └── sync-federated/             # Baseline results
 │
-├── venv/                           # virtual environment (.gitignore'd)
+├── venv/
 ├── .gitignore
 ├── LoadData.py
 ├── REAMDE.md
-├── requirements.txt                # dependencies
+├── requirements.txt
 ```
 
 ## Author

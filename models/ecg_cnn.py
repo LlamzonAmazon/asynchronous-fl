@@ -212,7 +212,7 @@ if __name__ == "__main__":
     print("=" * 60)
     print("TESTING ECG CNN Model")
     print("=" * 60)
-    
+
     # Create model
     model = ECGCNN(num_leads=12)
     print(f"\nModel created successfully.")
