@@ -4,9 +4,11 @@
 # Environment
 .env
 /venv
+.DS_Store
 
 # Testing Configurations
 .vscode
+utils/
 
 # Python cache files
 __pycache__/
@@ -16,6 +18,8 @@ __pycache__/
 .Python
 
 # Results
-/results/
+async-federated/
+centralized/
+sync-federated/
 *.png
 *.pth
