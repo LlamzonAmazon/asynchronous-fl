@@ -210,13 +210,12 @@ def count_parameters(model):
 
 if __name__ == "__main__":
     print("=" * 60)
-    print("TESTING ECG CNN Model")
+    print("ECG CNN model test")
     print("=" * 60)
 
     # Create model
     model = ECGCNN(num_leads=12)
-    print(f"\nModel created successfully.")
-    print(f"Total parameters: {count_parameters(model):,}")
+    print(f"\nParameters: {count_parameters(model):,}")
     
     # Test with dummy input
     batch_size = 4
@@ -224,13 +223,13 @@ if __name__ == "__main__":
     num_leads = 12
     
     dummy_input = torch.randn(batch_size, time_steps, num_leads)
-    print(f"\nInput shape: {dummy_input.shape}")
+    print(f"Input shape: {dummy_input.shape}")
     
     # Forward pass
     output = model(dummy_input)
     print(f"Output shape: {output.shape}")
-    print(f"Output values (probabilities): {output.squeeze().detach().numpy()}")
+    print(f"Output (probabilities): {output.squeeze().detach().numpy()}")
     
-    print("\n=== MODEL TEST SUCCESSFUL ===")
+    print("\nTest complete.")
     print("\nModel architecture:")
     print(model)

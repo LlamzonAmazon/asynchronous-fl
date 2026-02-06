@@ -12,12 +12,12 @@ class Config:
     
     # MODEL SETTINGS
     NUM_LEADS = 12 # ECG leads
-    DROPOUT_RATE = 0.5 # Dropout probability (0.5 = drop 50% of neurons)
+    DROPOUT_RATE = 0.4 # Dropout probability
     
     # TRAINING SETTINGS
     BATCH_SIZE = 32 # Number of samples per batch
     
-    NUM_EPOCHS = 15 # Maximum number of training epochs
+    NUM_EPOCHS = 15 # Maximum number of training epochs (match FL NUM_ROUNDS for fair comparison)
     
     LEARNING_RATE = 0.001 # How fast the model learns
     
@@ -28,10 +28,10 @@ class Config:
     import torch
     if torch.backends.mps.is_available():
         DEVICE = 'mps'
-        print("\n### USING APPLE SILICON GPU (MPS) ###")
+        print("\nDevice: MPS (Apple Silicon GPU)")
     else:
         DEVICE = 'cpu'
-        print("\n### USING CPU ###")
+        print("\nDevice: CPU")
     
     # OUTPUT SETTINGS
     RESULTS_DIR = './results/centralized'

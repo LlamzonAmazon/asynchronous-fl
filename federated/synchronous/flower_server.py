@@ -18,6 +18,9 @@ from typing import List, Tuple, Optional, Dict
 import numpy as np
 from pathlib import Path
 import json
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
 
 
 def evaluate_global_model(server_round: int, parameters, config):
@@ -252,3 +255,95 @@ def get_initial_parameters(model):
     """
     ndarrays = [val.cpu().numpy() for _, val in model.state_dict().items()]
     return ndarrays_to_parameters(ndarrays)
+
+
+def plot_training_curves(results_dir: str, plot_save_path: str) -> None:
+    """
+    Load per-round metrics and save training curves (test loss and accuracy vs round).
+    Uses checkpoints/all_metrics.json written by save_checkpoint during FL.
+    """
+    metrics_path = Path(results_dir) / "checkpoints" / "all_metrics.json"
+    if not metrics_path.exists():
+        print(f"No metrics at {metrics_path}; skipping training curves.")
+        return
+
+    with open(metrics_path, "r") as f:
+        all_metrics = json.load(f)
+
+    if not all_metrics:
+        print("No round metrics to plot; skipping training curves.")
+        return
+
+    rounds = [m["round"] for m in all_metrics]
+    test_losses = [m["test_loss"] for m in all_metrics]
+    test_accs = [m["test_accuracy"] for m in all_metrics]
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+
+    ax1.plot(rounds, test_losses, "b-o", label="Test Loss", markersize=4)
+    ax1.set_xlabel("Round")
+    ax1.set_ylabel("Loss")
+    ax1.set_title("Test Loss per Round")
+    ax1.legend()
+    ax1.grid(True)
+
+    ax2.plot(rounds, test_accs, "r-o", label="Test Accuracy (%)", markersize=4)
+    ax2.set_xlabel("Round")
+    ax2.set_ylabel("Accuracy (%)")
+    ax2.set_title("Test Accuracy per Round")
+    ax2.legend()
+    ax2.grid(True)
+
+    plt.tight_layout()
+    Path(plot_save_path).parent.mkdir(parents=True, exist_ok=True)
+    plt.savefig(plot_save_path)
+    plt.close()
+    print(f"Training curves saved: {plot_save_path}")
+
+
+def save_network_metrics(
+    model,
+    results_dir: str,
+    num_rounds: int,
+    num_clients: int,
+    bytes_per_param: int = 4,
+) -> None:
+    """
+    Compute and save FL network communication cost metrics.
+    Assumes float32 parameters (4 bytes each). Per round: server sends model to each
+    client (download), each client sends model back (upload).
+    """
+    num_params = sum(p.numel() for p in model.parameters())
+    model_size_bytes = num_params * bytes_per_param
+    model_size_mb = model_size_bytes / (1024 * 1024)
+
+    # Per round: server → each client (download), each client → server (upload)
+    bytes_per_round_down = num_clients * model_size_bytes
+    bytes_per_round_up = num_clients * model_size_bytes
+    total_download_bytes = num_rounds * bytes_per_round_down
+    total_upload_bytes = num_rounds * bytes_per_round_up
+    total_bytes = total_download_bytes + total_upload_bytes
+
+    metrics = {
+        "description": "Synchronous FL network communication (FedAvg): server sends global model to each client each round; each client sends updated model back.",
+        "num_parameters": num_params,
+        "model_size_bytes": model_size_bytes,
+        "model_size_mb": round(model_size_mb, 4),
+        "num_rounds": num_rounds,
+        "num_clients": num_clients,
+        "bytes_per_round_server_to_clients": bytes_per_round_down,
+        "bytes_per_round_clients_to_server": bytes_per_round_up,
+        "total_download_bytes": total_download_bytes,
+        "total_upload_bytes": total_upload_bytes,
+        "total_communication_bytes": total_bytes,
+        "total_communication_mb": round(total_bytes / (1024 * 1024), 4),
+    }
+
+    out_path = Path(results_dir) / "network_metrics.json"
+    Path(results_dir).mkdir(parents=True, exist_ok=True)
+    with open(out_path, "w") as f:
+        json.dump(metrics, f, indent=2)
+
+    print(f"Network metrics saved: {out_path}")
+    print(f"  Model size: {model_size_mb:.2f} MB  Rounds: {num_rounds}  Clients: {num_clients}")
+    print(f"  Total communication: {metrics['total_communication_mb']:.2f} MB ({total_bytes:,} bytes)")

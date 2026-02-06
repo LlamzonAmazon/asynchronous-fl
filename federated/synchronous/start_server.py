@@ -19,8 +19,14 @@ from pathlib import Path
 
 from models.ecg_cnn import ECGCNN
 from federated.synchronous.config import fl_config
-from federated.synchronous.flower_server import create_strategy, get_initial_parameters
+from federated.synchronous.flower_server import (
+    create_strategy,
+    get_initial_parameters,
+    plot_training_curves,
+    save_network_metrics,
+)
 from torch.utils.data import TensorDataset, DataLoader
+from utils.tee_log import tee_to_file
 import pickle
 import shutil
 
@@ -53,20 +59,23 @@ def save_final_model_backup(model, config):
     if final_checkpoint.exists():
         final_model_path.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(final_checkpoint, final_model_path)
-        print(f">>> Final global model saved: {final_model_path}")
+        print(f"Final global model saved: {final_model_path}")
     else:
         # If checkpoint doesn't exist, save current model state
         final_model_path.parent.mkdir(parents=True, exist_ok=True)
         torch.save(model.state_dict(), final_model_path)
-        print(f">>> Final global model saved: {final_model_path}")
+        print(f"Final global model saved: {final_model_path}")
 
 
 def main():
     """Start the Flower server"""
-    
-    print("\n" + "#" * 70)
-    print("###" + " " * 24 + "FLOWER SERVER STARTING" + " " * 24 + "###")
-    print("#" * 70 + "\n")
+    log_file = os.environ.get("FL_LOG_FILE")
+    if log_file:
+        tee_to_file(log_file, mode="a")
+
+    print("\n" + "=" * 70)
+    print("Flower server")
+    print("=" * 70)
     
     # Create global model
     device = torch.device(fl_config.DEVICE)
@@ -75,18 +84,18 @@ def main():
         dropout_rate=fl_config.DROPOUT_RATE
     )
     
-    print(f">>> Global model initialized on device: {device}")
+    print(f"Model device: {device}")
     
     # Load test dataset
-    print(">>> Loading test dataset...")
+    print("Loading test dataset...")
     test_dataset = load_test_dataset()
-    print(f">>> Test dataset loaded: {len(test_dataset)} samples")
+    print(f"Test dataset: {len(test_dataset)} samples")
     
     # Get initial parameters
     initial_parameters = get_initial_parameters(global_model)
     
     # Create strategy (FedAvg)
-    print(">>> Creating FedAvg strategy...")
+    print("Creating FedAvg strategy...")
     strategy = create_strategy(
         model=global_model,
         test_dataset=test_dataset,
@@ -95,11 +104,11 @@ def main():
         initial_parameters=initial_parameters
     )
     
-    print("\n" + "=" * 70)
-    print(f">>> SERVER READY!")
-    print(f">>> Waiting for {fl_config.NUM_CLIENTS} clients to connect...")
-    print(f">>> Number of rounds: {fl_config.NUM_ROUNDS}")
-    print("=" * 70 + "\n")
+    print("\n" + "-" * 70)
+    print("Server ready. Waiting for clients.")
+    print(f"  Clients required: {fl_config.NUM_CLIENTS}")
+    print(f"  Rounds:          {fl_config.NUM_ROUNDS}")
+    print("-" * 70 + "\n")
     
     # Start Flower server
     fl.server.start_server(
@@ -111,10 +120,21 @@ def main():
     
     # Ensure final model is saved (backup in case evaluate_fn didn't save it)
     save_final_model_backup(global_model, fl_config)
+
+    # Save training curves (test loss & accuracy per round)
+    plot_training_curves(fl_config.RESULTS_DIR, fl_config.PLOT_SAVE_PATH)
+
+    # Document network communication cost for this FL run
+    save_network_metrics(
+        global_model,
+        fl_config.RESULTS_DIR,
+        num_rounds=fl_config.NUM_ROUNDS,
+        num_clients=fl_config.NUM_CLIENTS,
+    )
     
-    print("\n" + "#" * 70)
-    print("###" + " " * 22 + "SERVER TRAINING COMPLETE" + " " * 22 + "###")
-    print("#" * 70 + "\n")
+    print("\n" + "=" * 70)
+    print("Server: training complete.")
+    print("=" * 70 + "\n")
 
 
 if __name__ == "__main__":

@@ -117,7 +117,7 @@ class ECGClient(fl.client.NumPyClient):
         total_loss = 0
         num_batches = 0
         
-        print(f"\n>>> [CLIENT {self.client_id}] STARTING TRAINING ON {len(self.trainset)} SAMPLES <<<", flush=True)
+        print(f"\n[Client {self.client_id}] Training on {len(self.trainset)} samples.", flush=True)
         
         # ==========================================================================================
         # Train for local_epochs (CURRENTLY SET TO 1 EPOCH PER ROUND)
@@ -137,13 +137,12 @@ class ECGClient(fl.client.NumPyClient):
                 
                 # Print progress every 20 batches
                 if (batch_idx + 1) % 20 == 0:
-                    print(f">>> [Client {self.client_id}] Epoch {epoch+1}/{self.local_epochs}, "
-                          f"Batch {batch_idx+1}/{len(self.trainloader)}, "
-                          f"Loss: {loss.item():.4f}", flush=True)
+                    print(f"[Client {self.client_id}] Epoch {epoch+1}/{self.local_epochs}, "
+                          f"batch {batch_idx+1}/{len(self.trainloader)}, loss: {loss.item():.4f}", flush=True)
         
         avg_loss = total_loss / num_batches if num_batches > 0 else 0
         
-        print(f"\n>>> [CLIENT {self.client_id}] TRAINING COMPLETE - Average loss: {avg_loss:.4f} <<<\n", flush=True)
+        print(f"\n[Client {self.client_id}] Done. Average loss: {avg_loss:.4f}\n", flush=True)
         
         # Return updated parameters and metrics
         # NumPyClient.fit() expects a list of NUMPY ARRAYS, not a Parameters object

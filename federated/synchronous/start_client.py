@@ -20,6 +20,7 @@ import pickle
 from models.ecg_cnn import ECGCNN
 from federated.synchronous.config import fl_config
 from federated.synchronous.flower_client import ECGClient
+from utils.tee_log import tee_to_file
 
 
 def load_client_dataset(client_id: int):
@@ -40,7 +41,10 @@ def load_client_dataset(client_id: int):
 
 def main():
     """Start a Flower client"""
-    
+    log_file = os.environ.get("FL_LOG_FILE")
+    if log_file:
+        tee_to_file(log_file, mode="a")
+
     # Parse command line arguments
     parser = argparse.ArgumentParser(description='Start a Flower client')
     parser.add_argument('--client-id', type=int, required=True,
@@ -49,7 +53,7 @@ def main():
     
     client_id = args.client_id
     
-    print(f"\n>>> STARTING CLIENT {client_id} <<<")
+    print(f"\nClient {client_id}: starting.")
     
     # Validate client ID
     if client_id < 0 or client_id >= fl_config.NUM_CLIENTS:
@@ -60,7 +64,7 @@ def main():
     
     # Load client's dataset
     trainset = load_client_dataset(client_id)
-    print(f">>> Client {client_id}: Loaded {len(trainset)} training samples")
+    print(f"Client {client_id}: loaded {len(trainset)} training samples.")
     
     # Create model
     # Each client has its own model instance
@@ -81,7 +85,7 @@ def main():
         local_epochs=fl_config.LOCAL_EPOCHS
     )
     
-    print(f"\n>>> CLIENT {client_id}: CONNECTING TO SERVER (localhost:8080)...\n")
+    print(f"\nClient {client_id}: connecting to server (localhost:8080).\n")
     
     # Connect to server and start training
     fl.client.start_client(
@@ -90,7 +94,7 @@ def main():
         grpc_max_message_length=2147483647,  # Max 32-bit int (~2GB)
     )
     
-    print(f"\n>>> CLIENT {client_id}: TRAINING COMPLETE, DISCONNECTED FROM SERVER\n")
+    print(f"\nClient {client_id}: finished. Disconnected from server.\n")
 
 
 if __name__ == "__main__":
