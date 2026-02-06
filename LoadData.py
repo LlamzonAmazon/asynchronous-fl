@@ -91,15 +91,15 @@ class PTBXLDataLoader:
         train_df = df[df.strat_fold != test_fold] # Loads in fold 1-9
         test_df = df[df.strat_fold == test_fold] # Loads in fold 10
         
-        print(f"TRAINING samples: {len(train_df)} (positive: {train_df.target.sum()})")
-        print(f"TESTING samples: {len(test_df)} (positive: {test_df.target.sum()})")
+        print(f"Training samples: {len(train_df)} (positive: {train_df.target.sum()})")
+        print(f"Test samples: {len(test_df)} (positive: {test_df.target.sum()})")
         
         # Load signals
-        print("Loading TRAINING signals")
+        print("Loading training signals...")
         X_train = np.array([self.load_signal(f) for f in train_df.filename_hr])
         y_train = train_df.target.values
         
-        print("Loading TESTING signals")
+        print("Loading test signals...")
         X_test = np.array([self.load_signal(f) for f in test_df.filename_hr])
         y_test = test_df.target.values
         
@@ -163,7 +163,7 @@ def main():
     # X_train is a 3D array of shape (num_ecgs, signal_length, num_leads)
     # X_train is the ECG signals of the training set
     # y_train is the labels of the training set corresponding to each ECG signal in X_train
-    print(f"TRAINING set shape: {X_train.shape}")
+    print(f"Training set shape: {X_train.shape}")
     
     # Number of ECGs in the training set
     print(f"  - Number of ECGs: {X_train.shape[0]}")
@@ -181,7 +181,7 @@ def main():
     print(f"  - Number of leads: {X_train.shape[2]}")
 
     # Testing set
-    print(f"\nTESTING set shape: {X_test.shape}")
+    print(f"\nTest set shape: {X_test.shape}")
     print(f"  - Number of ECGs: {X_test.shape[0]}")
     print(f"  - Signal recording length: {X_test.shape[1]}")
     print(f"  - Number of leads: {X_test.shape[2]}")
@@ -189,14 +189,14 @@ def main():
     # Class balances
     Training_Normal_count = y_train.sum()
     Training_Abnormal_count = len(y_train) - y_train.sum()
-    print(f"\nTRAINING Class balance: {Training_Normal_count} normal / {Training_Abnormal_count} abnormal => {Training_Normal_count / len(y_train) * 100:.1f}%-{Training_Abnormal_count / len(y_train) * 100:.1f}%")
+    print(f"\nTraining class balance: {Training_Normal_count} normal / {Training_Abnormal_count} abnormal ({Training_Normal_count / len(y_train) * 100:.1f}% / {Training_Abnormal_count / len(y_train) * 100:.1f}%)")
     
     Testing_Normal_count = y_test.sum()
     Testing_Abnormal_count = len(y_test) - y_test.sum()
-    print(f"TESTING Class balance: {Testing_Normal_count} normal / {Testing_Abnormal_count} abnormal => {Testing_Normal_count / len(y_test) * 100:.1f}%-{Testing_Abnormal_count / len(y_test) * 100:.1f}%")
+    print(f"Test class balance: {Testing_Normal_count} normal / {Testing_Abnormal_count} abnormal ({Testing_Normal_count / len(y_test) * 100:.1f}% / {Testing_Abnormal_count / len(y_test) * 100:.1f}%)")
     
     print("\n" + "=" * 60)
-    print("DATA LOADED SUCCESSFULLY.")
+    print("Data load complete.")
     print("=" * 60)
 
     return X_train, y_train, X_test, y_test

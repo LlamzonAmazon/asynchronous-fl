@@ -22,6 +22,7 @@ import time
 from LoadData import PTBXLDataLoader
 from models.ecg_cnn import ECGCNN, count_parameters
 from centralized.config import config
+from utils.tee_log import tee_to_file
 
 
 def normalize_data(X):
@@ -211,13 +212,15 @@ def evaluate(model, data_loader, criterion, device):
     return avg_loss, accuracy
 
 
-def visualize(train_losses, val_losses, train_accs, val_accs):
+def visualize(train_losses, val_losses, train_accs, val_accs, test_loss=None, test_acc=None):
     """
-    Create plots showing training progress
+    Create plots showing training progress.
+    Optionally show final test loss/accuracy so the plot matches printed final results.
     
     Args:
         train_losses, val_losses: Loss values per epoch
         train_accs, val_accs: Accuracy values per epoch
+        test_loss, test_acc: Final test set metrics (shown on plot if provided)
     """
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
     
@@ -231,7 +234,10 @@ def visualize(train_losses, val_losses, train_accs, val_accs):
     ax1.set_title('Training and Validation Loss')
     ax1.legend()
     ax1.grid(True)
-    
+    if test_loss is not None:
+        ax1.axhline(y=test_loss, color='gray', linestyle='--', alpha=0.8, label=f'Final Test Loss: {test_loss:.4f}')
+        ax1.legend()
+
     # Accuracy plot
     ax2.plot(epochs, train_accs, 'b-', label='Training Accuracy')
     ax2.plot(epochs, val_accs, 'r-', label='Validation Accuracy')
@@ -240,21 +246,26 @@ def visualize(train_losses, val_losses, train_accs, val_accs):
     ax2.set_title('Training and Validation Accuracy')
     ax2.legend()
     ax2.grid(True)
+    if test_acc is not None:
+        ax2.axhline(y=test_acc, color='gray', linestyle='--', alpha=0.8, label=f'Final Test Acc: {test_acc:.2f}%')
+        ax2.legend()
     
     plt.tight_layout()
     plt.savefig(config.PLOT_SAVE_PATH)
-    print(f"\n📊 Training curves saved to: {config.PLOT_SAVE_PATH}")
+    print(f"\nTraining curves saved to: {config.PLOT_SAVE_PATH}")
 
 
 def main():
     """
     Main training function
     """
+    Path(config.RESULTS_DIR).mkdir(parents=True, exist_ok=True)
+    tee_to_file(Path(config.RESULTS_DIR) / "last_run.log", mode="w")
+
     print("=" * 60)
     print("CENTRALIZED ECG MODEL TRAINING")
     print("=" * 60)
-    
-    Path(config.RESULTS_DIR).mkdir(parents=True, exist_ok=True)
+    print(f"Log file: {Path(config.RESULTS_DIR) / 'last_run.log'}\n")
     
     # ===== LOAD DATA ============================================
     print("\n### LOADING DATA ###")
@@ -357,21 +368,23 @@ def main():
     
     test_loss, test_acc = evaluate(model, test_loader, criterion, device)
     
-    print("###" * 60)
-    print("FINAL RESULTS")
-    print("###" * 60)
-    print(f"Test Loss: {test_loss:.4f}")
-    print(f"Test Accuracy: {test_acc:.2f}%")
-    print("###" * 60)
+    print("-" * 60)
+    print("Test set results")
+    print("-" * 60)
+    print(f"  Test loss:     {test_loss:.4f}")
+    print(f"  Test accuracy: {test_acc:.2f}%")
+    print("-" * 60)
     
     # ===== SAVE PLOTS =============================================
     print("\nSaving training curves.")
-    visualize(train_losses, val_losses, train_accs, val_accs)
+    visualize(train_losses, val_losses, train_accs, val_accs, test_loss=test_loss, test_acc=test_acc)
     
-    print(f"{'=' * 60}\nTRAINING COMPLETE\n")
-    print(f"  Results saved to: {config.RESULTS_DIR}")
-    print(f"  Best model saved to: {config.MODEL_SAVE_PATH}")
-    print(f"  Training curves saved to: {config.PLOT_SAVE_PATH}")
+    print(f"\n{'=' * 60}")
+    print("Training finished.")
+    print(f"  Results dir:    {config.RESULTS_DIR}")
+    print(f"  Best model:    {config.MODEL_SAVE_PATH}")
+    print(f"  Curves plot:   {config.PLOT_SAVE_PATH}")
+    print(f"  Log file:      {Path(config.RESULTS_DIR) / 'last_run.log'}")
     print(f"{'=' * 60}")
 
 
