@@ -22,6 +22,7 @@ class Config:
     LEARNING_RATE = 0.001 # How fast the model learns
     
     PATIENCE = 3 # Early stopping: stop if no improvement for 3 epochs
+    RANDOM_SEED = 42 # Global random seed for reproducible centralized experiments
     
     # DEVICE SETTINGS
     # Automatically use MPS (Apple Silicon GPU) if available, otherwise CPU

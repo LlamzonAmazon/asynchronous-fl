@@ -72,24 +72,37 @@ def partition_data_iid(X_train, y_train, num_clients: int) -> List[TensorDataset
     return client_datasets
 
 
-def partition_data_non_iid(X_train, y_train, num_clients: int, 
-                            alpha: float = 0.5) -> List[TensorDataset]:
+def partition_data_non_iid(
+    X_train, y_train, num_clients: int, alpha: float = 0.5
+) -> List[TensorDataset]:
     """
-    Partition data in non-IID manner
-    USES DIRICHLET DISTRIBUTION to simulate the REALISTIC scenario where different IoT devices 
-    see different distributions of data (e.g., one hospital sees more heart attacks).
-    
-    Args:
-        X_train: Training ECG signals
-        y_train: Training labels
-        num_clients: Number of clients
-        alpha: Dirichlet concentration parameter
-               - Lower alpha = more non-IID (heterogeneous)
-               - Higher alpha = more IID (homogeneous)
-               - Typical values: 0.1 (very non-IID) to 1.0 (moderately non-IID)
-    
-    Returns:
-        List of TensorDatasets, one per client
+    Partition data in non-IID manner using a Dirichlet distribution.
+
+    We simulate heterogeneous client distributions by drawing per-class
+    proportions from a Dirichlet distribution with concentration alpha.
+
+    For each class c with dataset D_c:
+      - Sample p ~ Dir(alpha * 1_N) over N clients
+      - Approximately allocate |D_c| * p_j samples of class c to client j
+
+    Args
+    ----
+    X_train : np.ndarray
+        Training ECG signals.
+    y_train : np.ndarray
+        Training labels.
+    num_clients : int
+        Number of clients.
+    alpha : float, default 0.5
+        Dirichlet concentration parameter.
+        * Lower alpha → more non-IID (heterogeneous)
+        * Higher alpha → more IID (homogeneous)
+        * Typical values: 0.1 (very non-IID) to 1.0 (moderately non-IID)
+
+    Returns
+    -------
+    List[TensorDataset]
+        One TensorDataset per client.
     """
     print(f"\nPartitioning data (non-IID, alpha={alpha}) across {num_clients} clients...")
     
@@ -145,26 +158,46 @@ def partition_data_non_iid(X_train, y_train, num_clients: int,
     return client_datasets
 
 
-def prepare_federated_data(X_train, y_train, X_test, y_test, 
-                           num_clients: int, iid: bool = True):
+def prepare_federated_data(
+    X_train,
+    y_train,
+    X_test,
+    y_test,
+    num_clients: int,
+    iid: bool = True,
+    alpha: float = 0.5,
+):
     """
-    Prepare data for federated learning
-    
-    Args:
-        X_train, y_train: Training data and labels
-        X_test, y_test: Test data and labels
-        num_clients: Number of clients
-        iid: Whether to use IID partitioning
-    
-    Returns:
-        client_datasets: List of training datasets (one per client)
-        test_dataset: Test dataset (shared across all for evaluation)
+    Prepare data for federated learning.
+
+    Args
+    ----
+    X_train, y_train : np.ndarray
+        Training data and labels.
+    X_test, y_test : np.ndarray
+        Test data and labels.
+    num_clients : int
+        Number of clients.
+    iid : bool, default True
+        If True, create IID partitions; if False, use Dirichlet non-IID.
+    alpha : float, default 0.5
+        Dirichlet concentration parameter passed to `partition_data_non_iid`
+        when `iid` is False.
+
+    Returns
+    -------
+    client_datasets : List[TensorDataset]
+        One training dataset per client.
+    test_dataset : TensorDataset
+        Shared test dataset for evaluation.
     """
     # Partition training data
     if iid:
         client_datasets = partition_data_iid(X_train, y_train, num_clients)
     else:
-        client_datasets = partition_data_non_iid(X_train, y_train, num_clients)
+        client_datasets = partition_data_non_iid(
+            X_train, y_train, num_clients, alpha=alpha
+        )
     
     # Prepare test dataset
     X_test_norm = normalize_data(X_test)

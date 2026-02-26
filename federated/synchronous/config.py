@@ -27,6 +27,7 @@ class FLConfig:
                               # Start with IID for baseline
     GENERATE_NEW_PARTITION = False  # Set to True to regenerate partitioned datasets
                                     # Set to False to reuse existing .pkl files (faster for debugging)
+    DIRICHLET_ALPHA = 0.5     # Concentration parameter for non-IID Dirichlet splits (see data_partition.py)
     
     # MODEL SETTINGS
     NUM_LEADS = 12
@@ -35,6 +36,9 @@ class FLConfig:
     # TRAINING SETTINGS
     BATCH_SIZE = 32           # Batch size for local training
     LEARNING_RATE = 0.001     # Local optimizer learning rate
+    RANDOM_SEED = 42          # Global random seed for FL experiments
+    EARLY_STOPPING = False    # Global (server-side) early stopping toggle
+    PATIENCE = 5              # Patience in rounds for global early stopping
     
     # DEVICE SETTINGS
     # NOTE: Using CPU for FL because multiple concurrent processes cause MPS GPU contention

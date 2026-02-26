@@ -21,6 +21,7 @@ from models.ecg_cnn import ECGCNN
 from federated.synchronous.config import fl_config
 from federated.synchronous.flower_client import ECGClient
 from utils.tee_log import tee_to_file
+from utils.seed import set_seed
 
 
 def load_client_dataset(client_id: int):
@@ -54,6 +55,9 @@ def main():
     client_id = args.client_id
     
     print(f"\nClient {client_id}: starting.")
+
+    # Set client-side seed (same base seed for now for reproducibility)
+    set_seed(getattr(fl_config, "RANDOM_SEED", None))
     
     # Validate client ID
     if client_id < 0 or client_id >= fl_config.NUM_CLIENTS:
