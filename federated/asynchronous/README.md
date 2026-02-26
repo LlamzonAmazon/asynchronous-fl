@@ -10,7 +10,7 @@
   1. `PeriodicSchedule` — full every N rounds; N=1 = sync equivalent
   2. `WarmupThenPeriodicSchedule` — all-full warmup then periodic
   3. `AdaptivePlateauSchedule` — triggers full on test-loss stagnation with min/max gap bounds
-- Factory c`reate_schedule(config)` reads `SCHEDULE_TYPE` and instantiates. 
+- Factory `create_schedule(config)` reads `SCHEDULE_TYPE` and instantiates. 
 - Adding a new schedule only requires a new class + factory entry.
 
 ## 3. `flower_server.py` — Asynchronous FedAvg
@@ -25,7 +25,7 @@
 - **Communication accounting**: per-round bytes up/down, staleness tracking, schedule metadata
 - **Post-training**: `save_run_metadata()`, `save_network_metrics()` (with sync baseline comparison + `upload_reduction_pct`), `plot_training_curves()` (with full-round vertical markers)
 
-## 4. `flower_client.py` — Asychronous Client
+## 4. `flower_client.py` — Asynchronous Client
 - Receives `shallow_idxs` from server each round (no constructor indices)
 - Sanity-checks `all_len + all_keys_hash` — mismatch raises exception
 - Trains full model every round (round type only controls upload)
@@ -39,3 +39,15 @@ Computes layer split, creates schedule, instantiates AsyncLayerFedAvg, saves run
 
 ## 7. `start_client.py` — Async Client launcher
 Loads partition data from `SYNC_DATA_DIR`, creates `AsyncECGClient`.
+
+---
+
+## Usage
+
+- Ensure the synchronous FL baseline has been run at least once so that
+  shared partition artifacts exist in `results/sync-federated/`:
+  - `python federated/synchronous/run_fl.py`
+
+- Then run the async orchestrator (reuses the same partitions and writes
+  async-specific metrics to `results/async-federated/`):
+  - `python federated/asynchronous/run_fl.py`

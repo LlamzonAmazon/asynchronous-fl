@@ -16,7 +16,7 @@ In standard federated learning (FL), client devices send full model updates sync
 All architectures use the some ECG CNN model and dataset to ensure fair comparison.
 - **Centralized baseline**: Single-machine training on PTB-XL.
 - **Synchronous FL baseline**: FedAvg over Flower. All clients participate each round. This experiment uses the same total “passes” over the data as centralized to ensure fair comparison.
-- **Asynchronous FL (planned)**: Same model and dataset with decoupled shallow/deep update schedule. Then the accuracy, communication cost, and runtime vs synchronous FL and centralized will be evaluated and compared against the baselines.
+- **Asynchronous FL**: Same model and dataset, reusing the synchronous FL data partitions. Deep layers are sent only on selected rounds while shallow layers are sent every round, under configurable schedules. Communication cost, update frequency, and runtime are compared against the centralized and synchronous baselines under matching training budgets.
 
 ## Dataset (PTB-XL)
 
@@ -54,8 +54,13 @@ asynchronous-fl/
 │   │   └── start_client.py    # Launches one client (--client-id)
 │   │
 │   └── asynchronous/
-│       ├── #TODO
-│       └── 
+│       ├── config.py           # Async FL config; mirrors sync + schedule/participation knobs
+│       ├── schedule.py         # Deep-layer send schedules (periodic, warmup, adaptive)
+│       ├── flower_server.py    # Async FedAvg with shallow/deep split, staleness + comm logs
+│       ├── flower_client.py    # Async client; full local train, partial uploads per round type
+│       ├── run_fl.py           # Orchestrator: verifies sync data, starts async server/clients
+│       ├── start_server.py     # Launches async Flower server
+│       └── start_client.py     # Launches one async client (--client-id)
 │
 ├── models/
 │   └── ecg_cnn.py             # ECG CNN (12-lead); used by centralized and FL
@@ -71,7 +76,21 @@ asynchronous-fl/
 └── README.md
 ```
 
-Generated at runtime: `results/centralized/`, `results/sync-federated/` (checkpoints, metrics, plots, logs). Dataset: place PTB-XL under project root (or set `DATA_PATH` in configs).
+Generated at runtime: `results/centralized/`, `results/sync-federated/`, `results/async-federated/` (checkpoints, metrics, plots, logs). Dataset: place PTB-XL under project root (or set `DATA_PATH` in configs).
+
+### Running experiments
+
+- **Centralized baseline**  
+  `python centralized/train.py`
+
+- **Synchronous FL baseline**  
+  `python federated/synchronous/run_fl.py`
+
+- **Asynchronous FL (layer-wise updates)**  
+  1. Run synchronous FL once to generate shared partition artifacts in `results/sync-federated/`:  
+     `python federated/synchronous/run_fl.py`  
+  2. Run the async orchestrator (reuses the same partitions):  
+     `python federated/asynchronous/run_fl.py`
 
 ---
 
