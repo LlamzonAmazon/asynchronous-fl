@@ -71,18 +71,54 @@ def evaluate_global_model(server_round: int, parameters, config):
     
     avg_loss = total_loss / len(test_loader)
     accuracy = 100 * correct / total if total > 0 else 0
-    
-    print(f"  [Server] Round {server_round}: Test Loss = {avg_loss:.4f}, "
-          f"Test Accuracy = {accuracy:.2f}%")
-    
+
+    print(
+        f"  [Server] Round {server_round}: Test Loss = {avg_loss:.4f}, "
+        f"Test Accuracy = {accuracy:.2f}%"
+    )
+
+    # Global early stopping (server-side), purely for analysis/logging.
+    # We track the best validation loss and how many rounds since it improved.
+    es_enabled = config.get("early_stopping_enabled", False)
+    if es_enabled:
+        state = config.setdefault(
+            "early_stopping_state",
+            {"best_loss": None, "patience_counter": 0, "early_stopped_round": None},
+        )
+        best_loss = state["best_loss"]
+        patience_counter = state["patience_counter"]
+        early_stopped_round = state["early_stopped_round"]
+        patience = config.get("early_stopping_patience", 5)
+
+        if best_loss is None or avg_loss < best_loss:
+            best_loss = avg_loss
+            patience_counter = 0
+            # Reset early_stopped_round since we have a new best
+            early_stopped_round = None
+        else:
+            patience_counter += 1
+            if early_stopped_round is None and patience_counter >= patience:
+                early_stopped_round = server_round
+                print(
+                    f"  [EarlyStopping] Patience exceeded at round {server_round} "
+                    f"(best loss {best_loss:.4f})."
+                )
+
+        state["best_loss"] = best_loss
+        state["patience_counter"] = patience_counter
+        state["early_stopped_round"] = early_stopped_round
+        config["early_stopping_state"] = state
+
     # Save checkpoint after each round
     if "results_dir" in config:
         save_checkpoint(server_round, model, avg_loss, accuracy, config["results_dir"])
-        
+
         # If this is the last round, also save as global_model.pth
         if "num_rounds" in config and server_round == config["num_rounds"]:
-            save_final_model(model, config["results_dir"], config.get("model_save_path"))
-    
+            save_final_model(
+                model, config["results_dir"], config.get("model_save_path")
+            )
+
     return avg_loss, {"accuracy": accuracy}
 
 
@@ -214,7 +250,9 @@ def create_strategy(model, test_dataset, device, config, initial_parameters):
         "device": device,
         "results_dir": config.RESULTS_DIR,
         "num_rounds": config.NUM_ROUNDS,
-        "model_save_path": config.MODEL_SAVE_PATH
+        "model_save_path": config.MODEL_SAVE_PATH,
+        "early_stopping_enabled": getattr(config, "EARLY_STOPPING", False),
+        "early_stopping_patience": getattr(config, "PATIENCE", 5),
     }
     
     strategy = FedAvg(
@@ -310,8 +348,23 @@ def save_network_metrics(
 ) -> None:
     """
     Compute and save FL network communication cost metrics.
-    Assumes float32 parameters (4 bytes each). Per round: server sends model to each
-    client (download), each client sends model back (upload).
+
+    Assumptions and definitions
+    ---------------------------
+    - All model parameters are stored as float32, so each parameter is
+      assumed to occupy `bytes_per_param` bytes (default 4 bytes).
+    - Let |θ| be the full model size in bytes:
+        |θ| = num_params * bytes_per_param.
+    - In synchronous FedAvg every round:
+        * The server sends the full model to each client (download).
+        * Each client sends the full model back to the server (upload).
+
+    For `num_rounds` rounds and `num_clients` clients, we log:
+      - bytes_per_round_server_to_clients = num_clients * |θ|
+      - bytes_per_round_clients_to_server = num_clients * |θ|
+      - total_download_bytes  = num_rounds * bytes_per_round_server_to_clients
+      - total_upload_bytes    = num_rounds * bytes_per_round_clients_to_server
+      - total_communication_bytes = total_download_bytes + total_upload_bytes
     """
     num_params = sum(p.numel() for p in model.parameters())
     model_size_bytes = num_params * bytes_per_param

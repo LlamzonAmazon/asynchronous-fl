@@ -23,6 +23,7 @@ from LoadData import PTBXLDataLoader
 from models.ecg_cnn import ECGCNN, count_parameters
 from centralized.config import config
 from utils.tee_log import tee_to_file
+from utils.seed import set_seed
 
 
 def normalize_data(X):
@@ -259,6 +260,9 @@ def main():
     """
     Main training function
     """
+    # Set global seed for reproducibility
+    set_seed(getattr(config, "RANDOM_SEED", None))
+
     Path(config.RESULTS_DIR).mkdir(parents=True, exist_ok=True)
     tee_to_file(Path(config.RESULTS_DIR) / "last_run.log", mode="w")
 

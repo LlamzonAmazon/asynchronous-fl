@@ -34,6 +34,7 @@ from LoadData import PTBXLDataLoader
 from federated.synchronous.config import fl_config
 from federated.synchronous.data_partition import prepare_federated_data
 from utils.tee_log import tee_to_file
+from utils.seed import set_seed
 
 
 def prepare_data():
@@ -43,6 +44,9 @@ def prepare_data():
     print("Data preparation")
     print("=" * 70)
     
+    # Set global seed before any partitioning / shuffling
+    set_seed(getattr(fl_config, "RANDOM_SEED", None))
+
     # Create results directory
     Path(fl_config.RESULTS_DIR).mkdir(parents=True, exist_ok=True)
     
@@ -67,9 +71,13 @@ def prepare_data():
     
     print("Partitioning data...")
     client_datasets, test_dataset = prepare_federated_data(
-        X_train, y_train, X_test, y_test,
+        X_train,
+        y_train,
+        X_test,
+        y_test,
         num_clients=fl_config.NUM_CLIENTS,
-        iid=fl_config.IID
+        iid=fl_config.IID,
+        alpha=fl_config.DIRICHLET_ALPHA,
     )
     
     print("Saving datasets to disk...")

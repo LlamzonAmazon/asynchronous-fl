@@ -8,7 +8,6 @@
 
 # Testing Configurations
 .vscode
-utils/
 
 # Python cache files
 __pycache__/

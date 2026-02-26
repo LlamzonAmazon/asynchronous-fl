@@ -27,6 +27,7 @@ from federated.synchronous.flower_server import (
 )
 from torch.utils.data import TensorDataset, DataLoader
 from utils.tee_log import tee_to_file
+from utils.seed import set_seed
 import pickle
 import shutil
 
@@ -72,6 +73,9 @@ def main():
     log_file = os.environ.get("FL_LOG_FILE")
     if log_file:
         tee_to_file(log_file, mode="a")
+
+    # Set global seed for reproducible server-side behaviour
+    set_seed(getattr(fl_config, "RANDOM_SEED", None))
 
     print("\n" + "=" * 70)
     print("Flower server")
