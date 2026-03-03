@@ -17,7 +17,9 @@ class Config:
     # TRAINING SETTINGS
     BATCH_SIZE = 32 # Number of samples per batch
     
-    NUM_EPOCHS = 15 # Maximum number of training epochs (match FL NUM_ROUNDS for fair comparison)
+    # Reduced training budget for all experiments (centralized, sync FL, async FL)
+    # NUM_EPOCHS is kept equal to FL NUM_ROUNDS for fair comparison.
+    NUM_EPOCHS = 4  # Effective passes over the data
     
     LEARNING_RATE = 0.001 # How fast the model learns
     

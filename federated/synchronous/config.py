@@ -17,16 +17,16 @@ class FLConfig:
     # FEDERATED LEARNING SETTINGS
     # Aligned with centralized: NUM_ROUNDS = effective passes over full (partitioned) data
     # Set NUM_ROUNDS = centralized NUM_EPOCHS for fair comparison (same amount of training).
-    NUM_CLIENTS = 5           # Number of simulated IoT devices (reduced for testing)
-    NUM_ROUNDS = 15           # Match centralized NUM_EPOCHS (15 effective passes over data)
-    CLIENTS_PER_ROUND = 5     # All clients participate each training round
+    NUM_CLIENTS = 3           # Number of simulated IoT devices
+    NUM_ROUNDS = 4            # Match centralized NUM_EPOCHS (4 effective passes over data)
+    CLIENTS_PER_ROUND = 3     # All clients participate each training round
     LOCAL_EPOCHS = 1          # Each client trains once locally per training round
 
     # Data partitioning
     IID = True                # True: IID split, False: non-IID split
                               # Start with IID for baseline
-    GENERATE_NEW_PARTITION = False  # Set to True to regenerate partitioned datasets
-                                    # Set to False to reuse existing .pkl files (faster for debugging)
+    GENERATE_NEW_PARTITION = True   # Regenerate partitioned datasets for new NUM_CLIENTS
+                                    # Set to False afterwards to reuse existing .pkl files
     DIRICHLET_ALPHA = 0.5     # Concentration parameter for non-IID Dirichlet splits (see data_partition.py)
     
     # MODEL SETTINGS
