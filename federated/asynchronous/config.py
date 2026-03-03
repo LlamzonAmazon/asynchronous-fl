@@ -19,9 +19,9 @@ class AsyncFLConfig:
 
     # ── FEDERATED LEARNING SETTINGS ────────────────────────────────────
     # Training budget is identical to sync: NUM_ROUNDS * LOCAL_EPOCHS
-    NUM_CLIENTS = 5
-    NUM_ROUNDS = 15            # Same as sync — training budget parity
-    CLIENTS_PER_ROUND = 5      # Default: all clients participate each round
+    NUM_CLIENTS = 3
+    NUM_ROUNDS = 4             # Same as sync — training budget parity
+    CLIENTS_PER_ROUND = 3      # Default: all clients participate each round
     LOCAL_EPOCHS = 1           # Each client trains once locally per round
 
     # Data partitioning
