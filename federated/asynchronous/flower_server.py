@@ -376,13 +376,17 @@ def _weighted_average_arrays(
 ) -> List[np.ndarray]:
     """Compute weighted average of numpy arrays by num_examples."""
     total_examples = sum(n for _, n in results)
+    # Use floating-point accumulators even for integer-valued tensors
+    # (e.g., num_batches_tracked) to avoid dtype casting errors when
+    # multiplying by fractional client weights.
     avg = [
-        np.zeros_like(results[0][0][i]) for i in range(len(results[0][0]))
+        np.zeros_like(results[0][0][i], dtype=np.float64)
+        for i in range(len(results[0][0]))
     ]
     for ndarrays, num_examples in results:
         weight = num_examples / total_examples
         for i, arr in enumerate(ndarrays):
-            avg[i] += arr * weight
+            avg[i] += arr.astype(np.float64) * weight
     return avg
 
 
