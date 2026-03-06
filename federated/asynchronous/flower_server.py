@@ -538,7 +538,7 @@ def plot_training_curves(
     ax1.plot(rounds, test_losses, "b-o", label="Test Loss", markersize=4)
     for r in rounds:
         if r in full_rounds:
-            ax1.axvline(x=r, color="green", alpha=0.25, linestyle="--", linewidth=1)
+            ax1.axvline(x=r, color="darkgreen", alpha=0.85, linestyle="--", linewidth=2.5)
     ax1.set_xlabel("Round")
     ax1.set_ylabel("Loss")
     ax1.set_title("Test Loss per Round")
@@ -548,7 +548,7 @@ def plot_training_curves(
     ax2.plot(rounds, test_accs, "r-o", label="Test Accuracy (%)", markersize=4)
     for r in rounds:
         if r in full_rounds:
-            ax2.axvline(x=r, color="green", alpha=0.25, linestyle="--", linewidth=1)
+            ax2.axvline(x=r, color="darkgreen", alpha=0.85, linestyle="--", linewidth=2.5)
     ax2.set_xlabel("Round")
     ax2.set_ylabel("Accuracy (%)")
     ax2.set_title("Test Accuracy per Round")
@@ -557,7 +557,7 @@ def plot_training_curves(
 
     # Add legend entry for full-round markers
     from matplotlib.lines import Line2D
-    custom_legend = Line2D([0], [0], color="green", alpha=0.5, linestyle="--", label="Full (deep) round")
+    custom_legend = Line2D([0], [0], color="darkgreen", alpha=0.85, linestyle="--", linewidth=2.5, label="Full (deep) round")
     for ax in (ax1, ax2):
         handles, labels = ax.get_legend_handles_labels()
         handles.append(custom_legend)

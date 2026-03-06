@@ -4,19 +4,9 @@ Thesis: **A Study of Asynchronous Weight-Updating Federated Learning for IoT Hea
 
 ---
 
-## Problem statement
+## Project abstract
 
-In standard federated learning (FL), client devices send full model updates synchronously in every training round. This causes high network usage and idle time on resource-limited devices (e.g. healthcare IoT). Sending both shallow and deep layer updates every round adds unnecessary communication and compute, which is a poor fit for devices that need to focus capacity on local inference and anomaly detection.
-
-## Proposed solution
-
-**Asynchronous weight-updating**: temporally decouple shallow and deep layer parameter updates. Shallow updates are sent more often and deep updates less often. The goal is to reduce network overhead and device load while keeping model accuracy under bandwidth and compute constraints.
-
-## Methodology
-All architectures use the some ECG CNN model and dataset to ensure fair comparison.
-- **Centralized baseline**: Single-machine training on PTB-XL.
-- **Synchronous FL baseline**: FedAvg over Flower. All clients participate each round. This experiment uses the same total “passes” over the data as centralized to ensure fair comparison.
-- **Asynchronous FL**: Same model and dataset, reusing the synchronous FL data partitions. Deep layers are sent only on selected rounds while shallow layers are sent every round, under configurable schedules. Communication cost, update frequency, and runtime are compared against the centralized and synchronous baselines under matching training budgets.
+This thesis studies whether asynchronous, layer-wise weight update scheduling in federated learning can reduce communication and synchronization overhead for resource-constrained IoT health devices while maintaining acceptable ECG classification performance. In contrast to standard synchronous FedAvg, where all clients upload full model parameters every round, the proposed approach temporally decouples shallow and deep layer update cadence so that shallow layers are transmitted frequently while deep layers are sent only on selected rounds. Using a shared ECG CNN and the PTB-XL dataset across three training regimes—centralized training, synchronous FL, and asynchronous FL—we hold architecture, data partitions, and total training budget constant while varying only the update schedule. We then measure total bytes transmitted, number of update messages, participation-adjusted communication cost, and server waiting/straggler effects alongside utility metrics (loss and accuracy/AUROC). The experimental matrix (documented in `experiments/EXPERIMENT_MATRIX.md`) spans IID vs non-IID client splits, different client participation and bandwidth regimes, and multiple shallow:deep update ratios to characterize the trade-offs of asynchronous layer-wise scheduling.
 
 ## Dataset (PTB-XL)
 
@@ -40,43 +30,58 @@ All architectures use the some ECG CNN model and dataset to ensure fair comparis
 ```
 asynchronous-fl/
 ├── centralized/
-│   ├── config.py              # Data, model, training (epochs, LR, early stopping)
-│   └── train.py               # Centralized ECG CNN training; logs, plots, best model
+│   ├── config.py              # Centralized data/model/training config
+│   └── train.py               # Centralized ECG CNN training + logging
 │
 ├── federated/
 │   ├── synchronous/
-│   │   ├── config.py           # FL config (clients, rounds, local epochs, IID/non-IID)
-│   │   ├── data_partition.py   # IID and non-IID partitioning across clients
-│   │   ├── flower_client.py    # Flower client: local training, parameter exchange
+│   │   ├── config.py          # FL config (clients, rounds, local epochs, IID/non-IID)
+│   │   ├── data_partition.py  # IID and non-IID partitioning across clients
+│   │   ├── flower_client.py   # Flower client: local training, parameter exchange
 │   │   ├── flower_server.py   # FedAvg strategy, server eval, checkpoints, metrics, plots
-│   │   ├── run_fl.py           # Orchestrator: prepare data, start server, run clients
-│   │   ├── start_server.py    # Launches Flower server
-│   │   └── start_client.py    # Launches one client (--client-id)
+│   │   ├── run_fl.py          # Orchestrator: prepare data, start server + clients
+│   │   ├── start_server.py    # Launches synchronous Flower server
+│   │   └── start_client.py    # Launches one synchronous client (--client-id)
 │   │
 │   └── asynchronous/
-│       ├── config.py           # Async FL config; mirrors sync + schedule/participation knobs
-│       ├── schedule.py         # Deep-layer send schedules (periodic, warmup, adaptive)
-│       ├── flower_server.py    # Async FedAvg with shallow/deep split, staleness + comm logs
-│       ├── flower_client.py    # Async client; full local train, partial uploads per round type
-│       ├── run_fl.py           # Orchestrator: verifies sync data, starts async server/clients
-│       ├── start_server.py     # Launches async Flower server
-│       └── start_client.py     # Launches one async client (--client-id)
+│       ├── README.md          # Async FL method description and usage
+│       ├── config.py          # Async FL config; mirrors sync + async schedule knobs
+│       ├── schedule.py        # Layer-wise update schedules (e.g., periodic shallow/deep)
+│       ├── flower_server.py   # Async FedAvg with shallow/deep split, staleness + comm logs
+│       ├── flower_client.py   # Async client; full local train, partial uploads per round type
+│       ├── run_fl.py          # Orchestrator: validates sync artifacts, runs async server/clients
+│       ├── start_server.py    # Launches async Flower server
+│       └── start_client.py    # Launches one async client (--client-id)
 │
 ├── models/
-│   └── ecg_cnn.py             # ECG CNN (12-lead); used by centralized and FL
+│   └── ecg_cnn.py             # Shared ECG CNN architecture for all regimes
+│
+├── PTB-XL/                    # PTB-XL dataset (or configure path via DATA_PATH)
+│
+├── results/
+│   ├── README.md              # Description of saved metrics, logs, and plots
+│   ├── centralized/           # Centralized training artifacts
+│   ├── sync-federated/        # Synchronous FL artifacts (incl. shared partitions)
+│   └── async-federated/       # Asynchronous FL artifacts
+│
+├── experiments/
+│   ├── EXPERIMENT_MATRIX.md   # Full experimental matrix (regimes, ratios, bandwidth, IID/non-IID)
+│   ├── EXP_A2.md              # Example async experiment spec/report
+│   └── REPORT_TEMPLATE.md     # Template for writing experiment reports
+│
+├── Documents/                 # Thesis documents and progress reports
 │
 ├── utils/
 │   ├── tee_log.py             # Tee stdout/stderr to log file
-│   ├── __init__.py
-│   └── ...                    # check_processes, kill, monitor (dev/debug)
+│   └── ...                    # Process monitoring and convenience utilities
 │
-├── LoadData.py                # PTB-XL loader: metadata, signals, train/test split by fold
+├── LoadData.py                # PTB-XL loader and fold-based splits
 ├── requirements.txt
 ├── .gitignore
 └── README.md
 ```
 
-Generated at runtime: `results/centralized/`, `results/sync-federated/`, `results/async-federated/` (checkpoints, metrics, plots, logs). Dataset: place PTB-XL under project root (or set `DATA_PATH` in configs).
+Results are written to `results/centralized/`, `results/sync-federated/`, and `results/async-federated/` (checkpoints, metrics, plots, logs). Place PTB-XL under `PTB-XL/` at the project root or configure `DATA_PATH` in the configs.
 
 ### Running experiments
 

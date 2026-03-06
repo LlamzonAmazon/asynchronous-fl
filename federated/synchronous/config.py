@@ -58,7 +58,7 @@ class FLConfig:
     RUN_ID = f"sync_{'IID' if IID else 'nonIID'}_{NUM_ROUNDS}R_{CLIENTS_PER_ROUND}C_{LOCAL_EPOCHS}L"
     RESULTS_DIR = f'{PARTITION_DIR}/{RUN_ID}'
     MODEL_SAVE_PATH = f'{RESULTS_DIR}/global_model.pth'
-    PLOT_SAVE_PATH = f'{RESULTS_DIR}/fl_curves.png'
+    PLOT_SAVE_PATH = f'{RESULTS_DIR}/{RUN_ID}.png'
     
     # LOGGING
     VERBOSE = True

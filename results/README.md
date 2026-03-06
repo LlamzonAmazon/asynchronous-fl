@@ -19,12 +19,12 @@ results/
 │   ├── client_2_dataset.pkl
 │   ├── test_dataset.pkl
 │   │
-│   ├── sync_IID_4R_3C_1L/              ← IID, 4 Rounds, 3 Clients, 1 Local Epoch ***
+│   ├── sync_IID_4R_3C_1L/              ← IID, 4 Rounds, 3 Clients, 1 Local Epoch ✅
 │   │   ├── experiment_config.txt
 │   │   ├── last_run.log
 │   │   ├── checkpoints/
 │   │   ├── global_model.pth
-│   │   ├── fl_curves.png
+│   │   ├── sync_IID_4R_3C_1L.png       ← training curves (filename = folder name)
 │   │   └── network_metrics.json
 │   │
 │   ├── sync_nonIID_4R_3C_1L/           ← IID, 4 Rounds, 3 Clients, 1 Local Epoch ***
@@ -39,12 +39,12 @@ results/
     │   ├── last_run.log
     │   ├── checkpoints/
     │   ├── global_model.pth
-    │   ├── fl_curves.png
+    │   ├── async_IID_4R_3C_1L_K1.png   ← training curves (filename = folder name)
     │   ├── network_metrics.json
     │   ├── round_metrics.json
     │   └── run_metadata.json
     │
-    ├── async_IID_4R_3C_1L_K2/          ← IID, 4 Rounds, 3 Clients, 1 Local Epoch, K = 2 (Deep Every 2 Rounds) ***
+    ├── async_IID_4R_3C_1L_K2/          ← IID, 4 Rounds, 3 Clients, 1 Local Epoch, K = 2 (Deep Every 2 Rounds) ✅
     │   └── ...
     ├── async_IID_4R_3C_1L_K4/          ← IID, 4 Rounds, 3 Clients, 1 Local Epoch, K = 4 ***
     │   └── ...
