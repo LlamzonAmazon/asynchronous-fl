@@ -52,9 +52,10 @@ class FLConfig:
     
     # OUTPUT SETTINGS
     # Partition .pkl files are stored in PARTITION_DIR (shared; async reads from here).
-    # Run outputs go to RESULTS_DIR = PARTITION_DIR / RUN_ID. Set RUN_ID per run (e.g. "sync_IID", "A4_baseline").
+    # Run outputs go to RESULTS_DIR = PARTITION_DIR / RUN_ID.
+    # RUN_ID is auto-derived: sync_IID_4R_3C_1L, sync_nonIID_4R_3C_1L, etc.
     PARTITION_DIR = './results/sync-federated'
-    RUN_ID = 'sync_IID'
+    RUN_ID = f"sync_{'IID' if IID else 'nonIID'}_{NUM_ROUNDS}R_{CLIENTS_PER_ROUND}C_{LOCAL_EPOCHS}L"
     RESULTS_DIR = f'{PARTITION_DIR}/{RUN_ID}'
     MODEL_SAVE_PATH = f'{RESULTS_DIR}/global_model.pth'
     PLOT_SAVE_PATH = f'{RESULTS_DIR}/fl_curves.png'

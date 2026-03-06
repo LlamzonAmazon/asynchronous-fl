@@ -70,10 +70,11 @@ class AsyncFLConfig:
     SYNC_DATA_DIR = './results/sync-federated'
 
     # ── OUTPUT SETTINGS ────────────────────────────────────────────────
-    # Set RUN_ID for each run (e.g. "A1", "A4", "A6") so outputs go to
-    # results/async-federated/<RUN_ID>/ and previous runs are not overwritten.
-    RUN_ID = 'A1'
+    # RUN_ID is auto-derived: async_IID_4R_3C_1L_K2, async_nonIID_4R_3C_1L_K4, etc.
+    # Adds _1Mbps suffix when SIMULATED_BANDWIDTH_BPS is set.
     _RESULTS_BASE = './results/async-federated'
+    _BW_SUFFIX = '_1Mbps' if SIMULATED_BANDWIDTH_BPS else ''
+    RUN_ID = f"async_{'IID' if IID else 'nonIID'}_{NUM_ROUNDS}R_{CLIENTS_PER_ROUND}C_{LOCAL_EPOCHS}L_K{DEEP_EVERY_N_ROUNDS}{_BW_SUFFIX}"
     RESULTS_DIR = f'{_RESULTS_BASE}/{RUN_ID}'
     MODEL_SAVE_PATH = f'{RESULTS_DIR}/global_model.pth'
     PLOT_SAVE_PATH = f'{RESULTS_DIR}/fl_curves.png'
