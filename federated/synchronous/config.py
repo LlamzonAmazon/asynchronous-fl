@@ -51,9 +51,13 @@ class FLConfig:
     #     DEVICE = 'cpu'
     
     # OUTPUT SETTINGS
-    RESULTS_DIR = './results/sync-federated'
-    MODEL_SAVE_PATH = './results/sync-federated/global_model.pth'
-    PLOT_SAVE_PATH = './results/sync-federated/fl_curves.png'
+    # Partition .pkl files are stored in PARTITION_DIR (shared; async reads from here).
+    # Run outputs go to RESULTS_DIR = PARTITION_DIR / RUN_ID. Set RUN_ID per run (e.g. "sync_IID", "A4_baseline").
+    PARTITION_DIR = './results/sync-federated'
+    RUN_ID = 'sync_IID'
+    RESULTS_DIR = f'{PARTITION_DIR}/{RUN_ID}'
+    MODEL_SAVE_PATH = f'{RESULTS_DIR}/global_model.pth'
+    PLOT_SAVE_PATH = f'{RESULTS_DIR}/fl_curves.png'
     
     # LOGGING
     VERBOSE = True

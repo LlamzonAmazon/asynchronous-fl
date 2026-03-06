@@ -66,13 +66,17 @@ class AsyncFLConfig:
     SIMULATED_BANDWIDTH_BPS = None      # None = unlimited; set for bandwidth regime
 
     # ── DATA SOURCE ────────────────────────────────────────────────────
-    # Reuse sync's partitioned .pkl files so both baselines see identical data
+    # Reuse sync's partitioned .pkl files (sync PARTITION_DIR) so both baselines see identical data
     SYNC_DATA_DIR = './results/sync-federated'
 
     # ── OUTPUT SETTINGS ────────────────────────────────────────────────
-    RESULTS_DIR = './results/async-federated'
-    MODEL_SAVE_PATH = './results/async-federated/global_model.pth'
-    PLOT_SAVE_PATH = './results/async-federated/fl_curves.png'
+    # Set RUN_ID for each run (e.g. "A1", "A4", "A6") so outputs go to
+    # results/async-federated/<RUN_ID>/ and previous runs are not overwritten.
+    RUN_ID = 'A1'
+    _RESULTS_BASE = './results/async-federated'
+    RESULTS_DIR = f'{_RESULTS_BASE}/{RUN_ID}'
+    MODEL_SAVE_PATH = f'{RESULTS_DIR}/global_model.pth'
+    PLOT_SAVE_PATH = f'{RESULTS_DIR}/fl_curves.png'
 
     # ── LOGGING ────────────────────────────────────────────────────────
     VERBOSE = True

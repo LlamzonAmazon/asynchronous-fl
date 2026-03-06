@@ -33,8 +33,8 @@ import shutil
 
 
 def load_test_dataset():
-    """Load the test dataset that was saved during data preparation"""
-    test_data_path = Path(fl_config.RESULTS_DIR) / 'test_dataset.pkl'
+    """Load the test dataset that was saved during data preparation (stored in PARTITION_DIR)."""
+    test_data_path = Path(fl_config.PARTITION_DIR) / 'test_dataset.pkl'
     
     if not test_data_path.exists():
         raise FileNotFoundError(
