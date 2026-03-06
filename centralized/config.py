@@ -37,9 +37,13 @@ class Config:
         print("\nDevice: CPU")
     
     # OUTPUT SETTINGS
-    RESULTS_DIR = './results/centralized'
-    MODEL_SAVE_PATH = './results/centralized/best_model.pth'
-    PLOT_SAVE_PATH = './results/centralized/training_curves.png'
+    # Set RUN_ID for each run (e.g. "C1", "centralized_baseline") so outputs go to
+    # results/centralized/<RUN_ID>/ and previous runs are not overwritten.
+    RUN_ID = 'C1'
+    _RESULTS_BASE = './results/centralized'
+    RESULTS_DIR = f'{_RESULTS_BASE}/{RUN_ID}'
+    MODEL_SAVE_PATH = f'{RESULTS_DIR}/best_model.pth'
+    PLOT_SAVE_PATH = f'{RESULTS_DIR}/training_curves.png'
     
     # DATA PREPROCESSING
     NORMALIZE = True # Whether to normalize ECG signals

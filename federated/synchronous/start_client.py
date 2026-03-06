@@ -25,8 +25,8 @@ from utils.seed import set_seed
 
 
 def load_client_dataset(client_id: int):
-    """Load this client's training dataset"""
-    client_data_path = Path(fl_config.RESULTS_DIR) / f'client_{client_id}_dataset.pkl'
+    """Load this client's training dataset (stored in PARTITION_DIR)."""
+    client_data_path = Path(fl_config.PARTITION_DIR) / f'client_{client_id}_dataset.pkl'
     
     if not client_data_path.exists():
         raise FileNotFoundError(

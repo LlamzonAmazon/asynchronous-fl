@@ -35,6 +35,7 @@ from federated.synchronous.config import fl_config
 from federated.synchronous.data_partition import prepare_federated_data
 from utils.tee_log import tee_to_file
 from utils.seed import set_seed
+from utils.experiment_config_writer import write_sync_config
 
 
 def prepare_data():
@@ -47,13 +48,13 @@ def prepare_data():
     # Set global seed before any partitioning / shuffling
     set_seed(getattr(fl_config, "RANDOM_SEED", None))
 
-    # Create results directory
-    Path(fl_config.RESULTS_DIR).mkdir(parents=True, exist_ok=True)
-    
+    # Partitions live in PARTITION_DIR (shared across runs; async reads from here)
+    partition_dir = Path(fl_config.PARTITION_DIR)
+    partition_dir.mkdir(parents=True, exist_ok=True)
+
     # Check if partitioned datasets already exist
-    results_dir = Path(fl_config.RESULTS_DIR)
-    test_path = results_dir / 'test_dataset.pkl'
-    client_paths = [results_dir / f'client_{i}_dataset.pkl' for i in range(fl_config.NUM_CLIENTS)]
+    test_path = partition_dir / 'test_dataset.pkl'
+    client_paths = [partition_dir / f'client_{i}_dataset.pkl' for i in range(fl_config.NUM_CLIENTS)]
     all_files_exist = test_path.exists() and all(p.exists() for p in client_paths)
     
     if all_files_exist and not fl_config.GENERATE_NEW_PARTITION:
@@ -81,15 +82,14 @@ def prepare_data():
     )
     
     print("Saving datasets to disk...")
-    # Save client datasets
+    # Save client datasets to PARTITION_DIR (shared for async)
     for i, dataset in enumerate(client_datasets):
-        client_path = Path(fl_config.RESULTS_DIR) / f'client_{i}_dataset.pkl'
+        client_path = partition_dir / f'client_{i}_dataset.pkl'
         with open(client_path, 'wb') as f:
             pickle.dump(dataset, f)
         print(f"  Saved client {i} dataset")
     
     # Save test dataset
-    test_path = Path(fl_config.RESULTS_DIR) / 'test_dataset.pkl'
     with open(test_path, 'wb') as f:
         pickle.dump(test_dataset, f)
     print(f"  Saved test dataset.\n")
@@ -216,17 +216,21 @@ def run_federated_learning():
 
 def main():
     """Main entry point"""
-    Path(fl_config.RESULTS_DIR).mkdir(parents=True, exist_ok=True)
-    log_path = Path(fl_config.RESULTS_DIR) / "last_run.log"
+    results_dir = Path(fl_config.RESULTS_DIR)
+    results_dir.mkdir(parents=True, exist_ok=True)
+    write_sync_config(results_dir, fl_config)
+    log_path = results_dir / "last_run.log"
     tee_to_file(log_path, mode="w")
     os.environ["FL_LOG_FILE"] = str(log_path)
 
     print("\n" + "=" * 60)
     print("Synchronous federated learning")
     print("=" * 60)
-    print(f"Log file: {log_path}\n")
+    print(f"Run ID:    {fl_config.RUN_ID}")
+    print(f"Results:   {results_dir}")
+    print(f"Log file:  {log_path}\n")
 
-    # Step 1: Prepare data
+    # Step 1: Prepare data (writes to PARTITION_DIR)
     prepare_data()
     
     # Step 2: Run federated learning

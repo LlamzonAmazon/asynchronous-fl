@@ -24,6 +24,7 @@ from models.ecg_cnn import ECGCNN, count_parameters
 from centralized.config import config
 from utils.tee_log import tee_to_file
 from utils.seed import set_seed
+from utils.experiment_config_writer import write_centralized_config
 
 
 def normalize_data(X):
@@ -263,8 +264,10 @@ def main():
     # Set global seed for reproducibility
     set_seed(getattr(config, "RANDOM_SEED", None))
 
-    Path(config.RESULTS_DIR).mkdir(parents=True, exist_ok=True)
-    tee_to_file(Path(config.RESULTS_DIR) / "last_run.log", mode="w")
+    results_dir = Path(config.RESULTS_DIR)
+    results_dir.mkdir(parents=True, exist_ok=True)
+    write_centralized_config(results_dir, config)
+    tee_to_file(results_dir / "last_run.log", mode="w")
 
     print("=" * 60)
     print("CENTRALIZED ECG MODEL TRAINING")

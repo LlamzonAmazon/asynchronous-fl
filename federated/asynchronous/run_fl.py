@@ -21,6 +21,7 @@ from pathlib import Path
 from federated.asynchronous.config import async_fl_config
 from utils.tee_log import tee_to_file
 from utils.seed import set_seed
+from utils.experiment_config_writer import write_async_config
 
 
 def verify_sync_data():
@@ -183,15 +184,19 @@ def main():
     # Set global seed for async orchestrator logging / any randomness here
     set_seed(getattr(config, "RANDOM_SEED", None))
 
-    Path(config.RESULTS_DIR).mkdir(parents=True, exist_ok=True)
-    log_path = Path(config.RESULTS_DIR) / "last_run.log"
+    results_dir = Path(config.RESULTS_DIR)
+    results_dir.mkdir(parents=True, exist_ok=True)
+    write_async_config(results_dir, config)
+    log_path = results_dir / "last_run.log"
     tee_to_file(log_path, mode="w")
     os.environ["FL_LOG_FILE"] = str(log_path)
 
     print("\n" + "=" * 60)
     print("Asynchronous layer-wise federated learning")
     print("=" * 60)
-    print(f"Log file: {log_path}\n")
+    print(f"Run ID:    {config.RUN_ID}")
+    print(f"Results:   {results_dir}")
+    print(f"Log file:  {log_path}\n")
 
     # Step 1: Verify sync partition data exists
     verify_sync_data()
