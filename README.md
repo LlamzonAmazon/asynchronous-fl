@@ -20,94 +20,57 @@ Thesis: **A Study of Asynchronous Weight-Updating Federated Learning for IoT Hea
 - **Communication savings**: Uplink messages in shallow-only rounds contain only \(|\boldsymbol{\theta}_S|\) bytes instead of \(|\boldsymbol{\theta}_S| + |\boldsymbol{\theta}_D|\), reducing client \(\rightarrow\) server communication without changing the model architecture or the local training budget.
 
 - **Server-side evaluation only**: After each round, the server evaluates the updated global model on a fixed held-out PTB-XL test set (shared with the centralized and synchronous baselines). No client-side evaluation is performed (\texttt{fraction\_evaluate=0.0}, \texttt{min\_evaluate\_clients=0}), so all utility curves are directly comparable across regimes.
+
 ---
 
 ## The Asynchronous Weight-Updating Formulation
 
-We let $T \in \mathbb{N}$ be the total number of communication rounds and $K \in \mathbb{N}$ the deep-layer synchronization period.
-
-The model parameters are split as
+We let $T \in \mathbb{N}$ be the total number of communication rounds and $K \in \mathbb{N}$ the deep-layer synchronization period. The model parameters are split as
 
 $$
-\boldsymbol{\theta} = (\boldsymbol{\theta}_S, \boldsymbol{\theta}_D)
+\boldsymbol{\theta} = (\boldsymbol{\theta}_S,\ \boldsymbol{\theta}_D)
 $$
 
-where $\boldsymbol{\theta}_S$ are the shallow parameters and $\boldsymbol{\theta}_D$ are the deep parameters.
-
-In round $t \in \{1, \dots, T\}$, the set of participating clients is $\mathcal{P}_t$.
-
-After local training, client $i$ holds $\boldsymbol{\theta}_{S,i}^t$ and $\boldsymbol{\theta}_{D,i}^t$, and the server computes FedAvg-style aggregates
+where $\boldsymbol{\theta}_S$ are the shallow parameters and $\boldsymbol{\theta}_D$ are the deep parameters. In round $t \in \{1, \dots, T\}$, the set of participating clients is $\mathcal{P}_t$. After local training, client $i$ holds $\boldsymbol{\theta}_{S,i}^t$ and $\boldsymbol{\theta}_{D,i}^t$, and the server computes FedAvg-style aggregates
 
 $$
-\operatorname{Agg}_S^t =
-\sum_{i \in \mathcal{P}_t}
-w_i^t \boldsymbol{\theta}_{S,i}^t
-$$
-
-$$
-\operatorname{Agg}_D^t =
-\sum_{i \in \mathcal{P}_t}
-w_i^t \boldsymbol{\theta}_{D,i}^t
-$$
-
-$$
+\text{Agg}_S^t = \sum_{i \in \mathcal{P}_t} w_i^t \boldsymbol{\theta}_{S,i}^t, \qquad
+\text{Agg}_D^t = \sum_{i \in \mathcal{P}_t} w_i^t \boldsymbol{\theta}_{D,i}^t, \qquad
 \sum_{i \in \mathcal{P}_t} w_i^t = 1
 $$
 
-The server maintains a deep-parameter cache $\widehat{\boldsymbol{\theta}}_D^t$.
-
-Under the `PeriodicSchedule`, the server update at round $t$ is
+The server maintains a deep-parameter cache $\widehat{\boldsymbol{\theta}}_D^t$. Under the `PeriodicSchedule`, the server update at round $t$ is
 
 $$
-\boldsymbol{\theta}_S^{t+1} = \operatorname{Agg}_S^t
+\boldsymbol{\theta}_S^{t+1} = \text{Agg}_S^t
 $$
 
 $$
-\boldsymbol{\theta}_D^{t+1} =
-\mathbb{I}[t \bmod K = 0] \, \operatorname{Agg}_D^t
-+
-\left(1 - \mathbb{I}[t \bmod K = 0]\right) \widehat{\boldsymbol{\theta}}_D^t
+\boldsymbol{\theta}_D^{t+1} = \mathbb{I}[t \bmod K = 0]\ \text{Agg}_D^t + \left(1 - \mathbb{I}[t \bmod K = 0]\right) \widehat{\boldsymbol{\theta}}_D^t
 $$
 
 $$
-\widehat{\boldsymbol{\theta}}_D^{t+1} =
-\mathbb{I}[t \bmod K = 0] \, \boldsymbol{\theta}_D^{t+1}
-+
-\left(1 - \mathbb{I}[t \bmod K = 0]\right) \widehat{\boldsymbol{\theta}}_D^t
+\widehat{\boldsymbol{\theta}}_D^{t+1} = \mathbb{I}[t \bmod K = 0]\ \boldsymbol{\theta}_D^{t+1} + \left(1 - \mathbb{I}[t \bmod K = 0]\right) \widehat{\boldsymbol{\theta}}_D^t
 $$
 
-If $t \bmod K = 0$ (a full round), both shallow and deep partitions are freshly aggregated and the cache is refreshed. Otherwise (a shallow-only round), only $\boldsymbol{\theta}_S$ is updated from client uploads and the cached deep parameters are reused.
+If $t \bmod K = 0$ (a *full round*), both shallow and deep partitions are freshly aggregated and the cache is refreshed. Otherwise (a *shallow-only round*), only $\boldsymbol{\theta}_S$ is updated from client uploads and the cached deep parameters are reused.
 
 ---
 
-### Communication cost
+### Communication Cost
 
 Let $|\boldsymbol{\theta}_S|$ and $|\boldsymbol{\theta}_D|$ be the byte sizes of the shallow and deep partitions.
 
 The **uplink communication cost** in round $t$ is
 
 $$
-C_{\mathrm{up}}(t) =
-|\mathcal{P}_t|
-\left(
-|\boldsymbol{\theta}_S|
-+
-|\boldsymbol{\theta}_D| \, \mathbb{I}[t \bmod K = 0]
-\right)
-\quad [\text{bytes}]
+C_{\text{up}}(t) = |\mathcal{P}_t| \left( |\boldsymbol{\theta}_S| + |\boldsymbol{\theta}_D|\ \mathbb{I}[t \bmod K = 0] \right) \quad [\text{bytes}]
 $$
 
 The **downlink communication cost** is
 
 $$
-C_{\mathrm{down}}(t) =
-|\mathcal{P}_t|
-\left(
-|\boldsymbol{\theta}_S|
-+
-|\boldsymbol{\theta}_D|
-\right)
-\quad [\text{bytes}]
+C_{\text{down}}(t) = |\mathcal{P}_t| \left( |\boldsymbol{\theta}_S| + |\boldsymbol{\theta}_D| \right) \quad [\text{bytes}]
 $$
 
 ---
