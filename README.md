@@ -1,4 +1,4 @@
-# A Study of Asynchronous Weight-Updating Federated Learning for IoT Health Devices**
+# A Study of Asynchronous Weight-Updating Federated Learning for IoT Health Devices
 
 ---
 ## System Architecture
