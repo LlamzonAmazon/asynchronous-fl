@@ -20,5 +20,4 @@ __pycache__/
 async-federated/
 centralized/
 sync-federated/
-*.png
 *.pth
