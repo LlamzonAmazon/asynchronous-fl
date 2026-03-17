@@ -11,14 +11,16 @@ Thomas Llamzon, Honours Specialization in Computer Science (BSc), Western Unive
 ## The Foundation of Asynchronous Weight-Updating 
 
 - **The CNN model is split into shallow and deep layers**: The global ECG CNN parameters $\boldsymbol{\theta}$ are partitioned into a shallow tensor $\boldsymbol{\theta}_S$ (early layers with prefixes matching `SHALLOW_PREFIXES`) and a deep tensor $\boldsymbol{\theta}_D$ (all remaining layers).
-- **Clients always train the full model**: In each communication round $t$, every participating client $i \in \mathcal{P}_t$ runs local training on its private ECG data and updates both $\boldsymbol{\theta}_{S,i}^t$ and $\boldsymbol{\theta}_{D,i}^t$.
+
+- **Clients always train the full model**: In each communication round $t$, every participating client $i \in \mathcal{P}\_t$ runs local training on its private ECG data and updates both $\boldsymbol{\theta}\_{S,i}^t$ and $\boldsymbol{\theta}\_{D,i}^t$.
+
 - **Server aggregates shallow layers every round**: The server performs a standard FedAvg-style aggregation of the shallow partition every round, so low-level ECG feature extractors stay well aligned across clients.
 
-- **Deep layers synchronize only on selected rounds**: Deep layers are aggregated only in “full” rounds, every \(K\)-th round (\(t \bmod K = 0\)). In between, the server reuses a cached copy of the most recently aggregated deep parameters instead of collecting new deep updates.
+- **Deep layers synchronize only on selected rounds**: Deep layers are aggregated only in "full" rounds, every $K$-th round ($t \bmod K = 0$). In between, the server reuses a cached copy of the most recently aggregated deep parameters instead of collecting new deep updates.
 
-- **Communication savings**: Uplink messages in shallow-only rounds contain only \(|\boldsymbol{\theta}_S|\) bytes instead of \(|\boldsymbol{\theta}_S| + |\boldsymbol{\theta}_D|\), reducing client \(\rightarrow\) server communication without changing the model architecture or the local training budget.
+- **Communication savings**: Uplink messages in shallow-only rounds contain only $|\boldsymbol{\theta}_S|$ bytes instead of $|\boldsymbol{\theta}_S| + |\boldsymbol{\theta}_D|$, reducing client $\rightarrow$ server communication without changing the model architecture or the local training budget.
 
-- **Server-side evaluation only**: After each round, the server evaluates the updated global model on a fixed held-out PTB-XL test set (shared with the centralized and synchronous baselines). No client-side evaluation is performed (\texttt{fraction\_evaluate=0.0}, \texttt{min\_evaluate\_clients=0}), so all utility curves are directly comparable across regimes.
+- **Server-side evaluation only**: After each round, the server evaluates the updated global model on a fixed held-out PTB-XL test set (shared with the centralized and synchronous baselines). No client-side evaluation is performed (`fraction_evaluate=0.0`, `min_evaluate_clients=0`), so all utility curves are directly comparable across regimes.
 
 ---
 
@@ -30,7 +32,7 @@ $$
 \boldsymbol{\theta} = (\boldsymbol{\theta}_S,\ \boldsymbol{\theta}_D)
 $$
 
-where $\boldsymbol{\theta}_S$ are the shallow parameters and $\boldsymbol{\theta}_D$ are the deep parameters. In round $t \in \{1, \dots, T\}$, the set of participating clients is $\mathcal{P}_t$. After local training, client $i$ holds $\boldsymbol{\theta}_{S,i}^t$ and $\boldsymbol{\theta}_{D,i}^t$, and the server computes FedAvg-style aggregates
+where $\boldsymbol{\theta}\_S$ are the shallow parameters and $\boldsymbol{\theta}\_D$ are the deep parameters. In round $t \in \{1, \dots, T\}$, the set of participating clients is $\mathcal{P}\_t$. After local training, client $i$ holds $\boldsymbol{\theta}\_{S,i}^t$ and $\boldsymbol{\theta}\_{D,i}^t$, and the server computes FedAvg-style aggregates
 
 $$
 \text{Agg}_S^t = \sum_{i \in \mathcal{P}_t} w_i^t \boldsymbol{\theta}_{S,i}^t, \qquad
@@ -148,17 +150,18 @@ Results are written to `results/centralized/`, `results/sync-federated/`, and `r
 ## Experiments
 
 
-| **Experiment**                                   | Update Cadence Policy           | Data Distribution | Client Participation Rate | Bandwidth Regime      | Shallow:Deep Update Ratio  | Controls (Held Constant)                                             |
-|--------------------------------------------------|---------------------------------|-------------------|--------------------------|-----------------------|-----------------------------|----------------------------------------------------------------------|
-| Centralized Training                             | N/A (Centralized SGD)           | IID / Non-IID     | Full (All)               | Unlimited             | N/A                         | Model, optimizer, batch size, init, splits, total epochs             |
-| Synchronous Federated (FedAvg, baseline)         | Synchronous (FedAvg, K=1)       | IID / Non-IID     | Full / Partial           | Unlimited / Limited   | N/A                         | Model, data, per-client batch size, client config, random seed       |
-| Async FedAvg (K=1, control sanity check)         | Async, K=1 periodic             | IID / Non-IID     | Full / Partial           | Unlimited / Limited   | Shallow:Deep = 1:1          | Model, data, optimizer, initial weights, partition set               |
-| Async FedAvg (periodic shallow/deep schedule)    | Async, K>1 (periodic schedule)  | IID / Non-IID     | Full / Partial           | Unlimited / Limited   | 3:1, 5:1, (etc)             | Model, data, init, optimizer, partition set, synchronous server impl |
-| Async FedAvg (participation+bandwidth ablations) | Async, various K + bandwidth    | IID / Non-IID     | Low vs High              | Low vs High           | 3:1, 5:1, (etc)             | Model, data, optimizer, seed, protocol as above                      |
+| Experiment | **Architecture** | Data Distribution | Deep-Layer Updates Every K Rounds | Purpose |
+|------------|------------------|-------------------|---------------------------|---------|
+| C1         | Centralized      | IID               |                           | _Establish_ baseline for model performance. |
+| S1         | Synchronous FL   | IID               |                           | _Establish_ baseline FL network communication metrics in **ideal** IoT device data distributions. |
+| A1         | Asynchronous FL  | IID               | K=1                       | _Observe_ benefits & tradeoffs of asynchronous FL in **ideal** IoT device data distributions. |
+| A2         | Asynchronous FL  | IID               | K=2                       | _Observe_ benefits & tradeoffs of asynchronous FL in **ideal** IoT device data distributions. |
+| A3         | Asynchronous FL  | IID               | K=4                       | _Observe_ benefits & tradeoffs of asynchronous FL in **ideal** IoT device data distributions. |
+| S2         | Synchronous FL   | non-IID           |                           | _Establish_ baseline FL network communication metrics in **realistic** IoT device data distributions. |
+| A1         | Asynchronous FL  | non-IID           | K=2                       | _Observe_ benefits & tradeoffs of asynchronous FL in **realistic** IoT device data distributions. |
+| A2         | Asynchronous FL  | non-IID           | K=4                       | _Observe_ benefits & tradeoffs of asynchronous FL in **realistic** IoT device data distributions. |
 
-**Legend:**  
-- **Update Cadence Policy (Independent variable):** Frequency/differentiation of shallow vs. deep layer updates (periodic for async runs).  
-- **Controls:** Model (ecg_cnn.py), partitions, random seed, training epochs, aggregation, evaluation pipeline.
+- **Controls:** Model (ecg_cnn.py), optimizer (Adam), batch size, init partitions, random seed, training epochs, aggregation, evaluation pipeline, 
 
 ---
 
