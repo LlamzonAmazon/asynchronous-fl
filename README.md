@@ -1,4 +1,5 @@
 # A Study of Asynchronous Weight-Updating Federated Learning for IoT Health Devices
+Thomas Llamzon, Honours Specialization in Computer Science (BSc), Western University
 
 ---
 ## System Architecture
@@ -179,12 +180,3 @@ For each experiment, we observe and record the following dependent variables:
 - **Variation/stability across seeds and experimental repetitions**
 
 All metrics and configurations are logged per run under the appropriate `results/` subdirectory to ensure reproducibility and enable direct controlled comparison for evaluating asynchronous FL methods against baselines.
-
-
-
-
----
-
-## Author
-
-**Thomas Llamzon** – Honours Specialization in Computer Science, Western University
