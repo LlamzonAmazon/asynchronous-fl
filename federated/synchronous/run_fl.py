@@ -146,6 +146,7 @@ def run_federated_learning():
     print("\n" + "=" * 70)
     print("Federated learning")
     print("=" * 70)
+    print(f"  Device:       {fl_config.DEVICE}")
     print(f"  Clients:      {fl_config.NUM_CLIENTS}")
     print(f"  Rounds:       {fl_config.NUM_ROUNDS}")
     print(f"  Local epochs: {fl_config.LOCAL_EPOCHS}")

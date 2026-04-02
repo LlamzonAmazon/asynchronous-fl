@@ -33,6 +33,7 @@ scheduled partial update scheme with logged staleness, not a fully
 staleness-weighted asynchronous FL method.
 """
 
+import csv
 import hashlib
 import json
 import random
@@ -165,6 +166,8 @@ class AsyncLayerFedAvg(FedAvg):
         """Build per-client FitIns with round_type + shallow_idxs."""
 
         round_type = self.schedule.round_type(server_round, self.history)
+        if round_type == "full":
+            print(f"\n==============================\nDEEP ROUND\n==============================\n[Round {server_round}]\n")
 
         # Deterministic client sampling
         sample_size = min(self.fl_config.CLIENTS_PER_ROUND, client_manager.num_available())
@@ -472,6 +475,13 @@ def save_checkpoint(
     all_metrics.append(metrics)
     with open(cumulative_path, "w") as f:
         json.dump(all_metrics, f, indent=2)
+
+    csv_path = checkpoint_dir / "all_metrics.csv"
+    fieldnames = list(all_metrics[0].keys())
+    with open(csv_path, "w", newline="") as csvf:
+        writer = csv.DictWriter(csvf, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(all_metrics)
 
     print(f"  [Server] Checkpoint saved: {model_path}")
 

@@ -23,7 +23,7 @@ class FLConfig:
     LOCAL_EPOCHS = 1          # Each client trains once locally per training round
 
     # Data partitioning
-    IID = True                # True: IID split, False: non-IID split
+    IID = False                # True: IID split, False: non-IID split
                               # Start with IID for baseline
     GENERATE_NEW_PARTITION = True   # Regenerate partitioned datasets for new NUM_CLIENTS
                                     # Set to False afterwards to reuse existing .pkl files
@@ -41,14 +41,13 @@ class FLConfig:
     PATIENCE = 5              # Patience in rounds for global early stopping
     
     # DEVICE SETTINGS
-    # NOTE: Using CPU for FL because multiple concurrent processes cause MPS GPU contention
-    # MPS (Apple Silicon GPU) doesn't handle multiple processes well - causes command buffer errors
-    DEVICE = 'cpu'
-    # Uncomment below to use MPS for single-process training:
-    # if torch.backends.mps.is_available():
-    #     DEVICE = 'mps'
-    # else:
-    #     DEVICE = 'cpu'
+    # Priority: CUDA (Alliance/NVIDIA GPU) > CPU
+    # NOTE: MPS (Apple Silicon) is excluded for FL because multiple concurrent
+    # processes cause MPS command buffer errors. CUDA handles multi-process fine.
+    if torch.cuda.is_available():
+        DEVICE = 'cuda'
+    else:
+        DEVICE = 'cpu'
     
     # OUTPUT SETTINGS
     # Partition .pkl files are stored in PARTITION_DIR (shared; async reads from here).

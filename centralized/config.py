@@ -27,9 +27,12 @@ class Config:
     RANDOM_SEED = 42 # Global random seed for reproducible centralized experiments
     
     # DEVICE SETTINGS
-    # Automatically use MPS (Apple Silicon GPU) if available, otherwise CPU
+    # Priority: CUDA (Alliance/NVIDIA GPU) > MPS (Apple Silicon) > CPU
     import torch
-    if torch.backends.mps.is_available():
+    if torch.cuda.is_available():
+        DEVICE = 'cuda'
+        print(f"\nDevice: CUDA ({torch.cuda.get_device_name(0)})")
+    elif torch.backends.mps.is_available():
         DEVICE = 'mps'
         print("\nDevice: MPS (Apple Silicon GPU)")
     else:

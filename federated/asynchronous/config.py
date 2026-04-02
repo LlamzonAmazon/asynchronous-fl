@@ -24,8 +24,8 @@ class AsyncFLConfig:
     CLIENTS_PER_ROUND = 3      # Default: all clients participate each round
     LOCAL_EPOCHS = 1           # Each client trains once locally per round
 
-    # Data partitioning
-    IID = True
+    # Data partitioning (must match the partitions in SYNC_DATA_DIR used for this run)
+    IID = False
     # Async experiments reuse the same IID / non-IID partitions generated
     # under the synchronous FL config. DIRICHLET_ALPHA is recorded here
     # for completeness and should match federated/synchronous/config.py.
@@ -43,14 +43,19 @@ class AsyncFLConfig:
     RANDOM_SEED = 42          # Global random seed for async FL experiments
 
     # ── DEVICE SETTINGS (identical to sync) ────────────────────────────
-    DEVICE = 'cpu'
+    # Priority: CUDA (Alliance/NVIDIA GPU) > CPU
+    # MPS excluded — same reason as sync (multi-process contention).
+    if torch.cuda.is_available():
+        DEVICE = 'cuda'
+    else:
+        DEVICE = 'cpu'
 
     # ── ASYNC-SPECIFIC: SCHEDULE SETTINGS ──────────────────────────────
     # Primary experimental variable — controls which rounds are "full" vs
     # "shallow_only". See schedule.py for available schedule types.
     # In the notation used in the thesis, K = DEEP_EVERY_N_ROUNDS.
     SCHEDULE_TYPE = 'periodic'          # 'periodic' | 'warmup_then_periodic' | 'adaptive_plateau'
-    DEEP_EVERY_N_ROUNDS = 1             # Deep-layer sync period K (2 = full rounds at 2,4; shallow at 1,3)
+    DEEP_EVERY_N_ROUNDS = 4             # Deep-layer sync period K (2 = full rounds at 2,4; shallow at 1,3)
     WARMUP_ROUNDS = 0                   # For warmup_then_periodic schedule
     ADAPTIVE_PATIENCE = 3               # For adaptive_plateau schedule
     ADAPTIVE_MIN_GAP = 2                # Minimum gap between deep rounds (adaptive)

@@ -8,6 +8,8 @@ The server:
 4. Evaluates global model on test set
 """
 
+import csv
+
 import flwr as fl
 from flwr.server.strategy import FedAvg
 from flwr.common import Metrics, ndarrays_to_parameters
@@ -163,6 +165,13 @@ def save_checkpoint(round_num: int, model, loss: float, accuracy: float, results
     
     with open(cumulative_path, 'w') as f:
         json.dump(all_metrics, f, indent=2)
+
+    csv_path = checkpoint_dir / "all_metrics.csv"
+    fieldnames = list(all_metrics[0].keys())
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(all_metrics)
     
     print(f"  [Server] Checkpoint saved: {model_path}")
 

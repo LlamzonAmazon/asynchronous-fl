@@ -16,6 +16,7 @@ import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader, random_split
 import numpy as np
 import matplotlib.pyplot as plt
+import csv
 from pathlib import Path
 import time
 
@@ -382,6 +383,15 @@ def main():
     print(f"  Test accuracy: {test_acc:.2f}%")
     print("-" * 60)
     
+    # ===== SAVE METRICS CSV =======================================
+    csv_path = Path(config.RESULTS_DIR) / "metrics.csv"
+    with open(csv_path, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["epoch", "train_loss", "val_loss", "train_acc", "val_acc"])
+        for i in range(len(train_losses)):
+            writer.writerow([i + 1, train_losses[i], val_losses[i], train_accs[i], val_accs[i]])
+    print(f"\nMetrics CSV saved: {csv_path}")
+
     # ===== SAVE PLOTS =============================================
     print("\nSaving training curves.")
     visualize(train_losses, val_losses, train_accs, val_accs, test_loss=test_loss, test_acc=test_acc)

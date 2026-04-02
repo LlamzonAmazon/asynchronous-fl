@@ -108,6 +108,7 @@ def run_federated_learning():
     print("\n" + "=" * 70)
     print("Asynchronous layer-wise federated learning")
     print("=" * 70)
+    print(f"  Device:           {config.DEVICE}")
     print(f"  Clients:          {config.NUM_CLIENTS}")
     print(f"  Clients/round:    {config.CLIENTS_PER_ROUND}")
     print(f"  Rounds:           {config.NUM_ROUNDS}")
