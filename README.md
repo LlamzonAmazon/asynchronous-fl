@@ -1,6 +1,8 @@
 # A Study of Asynchronous Weight-Updating Federated Learning for IoT Health Devices
 Thomas Llamzon, Honours Specialization in Computer Science (BSc), Western University
 
+[![Report](https://img.shields.io/badge/Read_My_Thesis-PDF-E74C3C?style=for-the-badge&logo=adobeacrobatreader&logoColor=white)](THESIS.pdf)
+
 ---
 ## System Architecture
 
