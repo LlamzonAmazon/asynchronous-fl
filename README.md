@@ -2,6 +2,33 @@
 Thomas Llamzon, Honours Specialization in Computer Science (BSc), Western University
 
 [![Report](https://img.shields.io/badge/Read_My_Thesis-PDF-E74C3C?style=for-the-badge&logo=adobeacrobatreader&logoColor=white)](THESIS.pdf)
+[![Paper](https://img.shields.io/badge/IEEE_GLOBECOM_2026_Paper-PDF-00629B?style=for-the-badge&logo=ieee&logoColor=white)](paper/main-conference.pdf)
+
+---
+## Publication
+
+**Asynchronous Layer-Wise Weight Updating for Communication-Efficient Federated Learning in IoT Health Devices**
+T. Llamzon, M. Fouda, M. I. Ibrahem, S. Hashima, Z. Md Fadlullah.
+Accepted to **IEEE GLOBECOM 2026** (Selected Areas in Communications: e-Health), Macau, December 2026.
+
+The copy in [`paper/`](paper/) is the **accepted manuscript, camera-ready in review**. It is not the
+final published version; the version of record will appear in IEEE Xplore. Source (`main-conference.tex`,
+`ref.bib`, `Tikz-Figs/`) is included so the figures can be regenerated from the run artifacts.
+
+© 2026 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all
+other uses, in any current or future media, including reprinting/republishing this material for
+advertising or promotional purposes, creating new collective works, for resale or redistribution to
+servers or lists, or reuse of any copyrighted component of this work in other works.
+
+```bibtex
+@inproceedings{llamzon2026asyncfl,
+  title     = {Asynchronous Layer-Wise Weight Updating for Communication-Efficient Federated Learning in IoT Health Devices},
+  author    = {Llamzon, Thomas and Fouda, Mostafa and Ibrahem, Mohamed I. and Hashima, Sherief and Fadlullah, Zubair Md},
+  booktitle = {Proc. IEEE Global Communications Conference (GLOBECOM)},
+  year      = {2026},
+  note      = {Accepted; to appear}
+}
+```
 
 ---
 ## System Architecture
@@ -128,24 +155,70 @@ asynchronous-fl/
 │   ├── sync-federated/        # Synchronous FL artifacts (incl. shared partitions)
 │   └── async-federated/       # Asynchronous FL artifacts
 │
-├── experiments/
-│   ├── EXPERIMENT_MATRIX.md   # Full experimental matrix (regimes, ratios, bandwidth, IID/non-IID)
-│   ├── EXP_A2.md              # Example async experiment spec/report
-│   └── REPORT_TEMPLATE.md     # Template for writing experiment reports
+├── jobs/
+│   ├── run_seed_chain.sh      # One replicate chain: sync FedAvg baseline, then async K (FL_SEED-scoped)
+│   ├── run_chains_serial.sh   # Run remaining chains one at a time (memory-bound; never concurrent)
+│   ├── run_tonight.sh         # Detached, sleep-guarded launcher for an overnight batch
+│   ├── status.sh              # Replicate status: which seeds/regimes are done, accuracy per run
+│   ├── validate_run.py        # Check a run's artifacts actually match its metrics file
+│   ├── make_results_table.py  # Results table + every number quoted in the paper, from run artifacts
+│   ├── precheck_threads.py    # Thread-count determinism and throughput check before a batch
+│   ├── watchdog.py            # Detect and recover a stalled (gRPC ping-timeout) chain
+│   └── stall_watchdog.sh, start_watchdog.sh, queue_seed13.sh
 │
-├── Documents/                 # Thesis documents and progress reports
+├── paper/
+│   ├── main-conference.pdf    # Accepted manuscript (IEEE GLOBECOM 2026), camera-ready in review
+│   ├── main-conference.tex    # Paper source
+│   ├── ref.bib
+│   └── Tikz-Figs/             # pgfplots figures, one .tex per experiment curve
 │
 ├── utils/
+│   ├── seed.py                # Seeds Python/NumPy/PyTorch and pins the PyTorch thread count
 │   ├── tee_log.py             # Tee stdout/stderr to log file
-│   └── ...                    # Process monitoring and convenience utilities
+│   └── ...                    # Config writer, process monitoring, convenience utilities
 │
 ├── LoadData.py                # PTB-XL loader and fold-based splits
+├── THESIS.pdf                 # Undergraduate thesis (the long-form version of the paper)
 ├── requirements.txt
 ├── .gitignore
 └── README.md
 ```
 
 Results are written to `results/centralized/`, `results/sync-federated/`, and `results/async-federated/` (checkpoints, metrics, plots, logs). Place PTB-XL under `PTB-XL/` at the project root or configure `DATA_PATH` in the configs.
+
+---
+
+## Reproducing the runs
+
+All defaults reproduce the single-seed (seed 42) experiments reported in the thesis. The paper's
+multi-seed replicates are driven entirely by environment variables, so the code path is identical
+whether or not they are set:
+
+| Variable | Default | Effect |
+|---|---|---|
+| `FL_SEED` | unset (42) | Seeds Python/NumPy/PyTorch **and** scopes `RUN_ID` and the partition directory (`results/sync-federated_s<seed>/`), so replicates never share or clobber partitions. The async run reads the partitions the sync run of the same seed produced. |
+| `FL_K` | `1` | Deep-layer synchronization period K for the async regime. |
+| `FL_PORT` | `8080` | Flower server/client port, so two chains can coexist on one host. |
+| `FL_NUM_THREADS` | PyTorch default | Pins the PyTorch intra-op thread count. Forward+backward was verified bitwise identical across 1, 4, 8 and 10 threads on this model; pinning makes the reproducibility claim independent of the host. Every run records `TORCH_THREADS` in its `experiment_config.txt`. |
+
+```bash
+# Single replicate chain: synchronous FedAvg baseline for seed 7, then async K=2 on the same partitions
+FL_SEED=7 FL_K=2 FL_PORT=8081 jobs/run_seed_chain.sh
+
+# Only the async stage (the sync baseline for that seed already exists)
+FL_SEED=7 FL_K=2 FL_PORT=8081 FL_STAGES=async jobs/run_seed_chain.sh
+
+# Progress across seeds, and a sanity check that a finished run did what its metrics claim
+jobs/status.sh
+python jobs/validate_run.py results/async-federated/async_IID_4R_3C_1L_K2_s7 --clients 3 --rounds 4
+
+# Regenerate the paper's results table and quoted figures from the run artifacts
+python jobs/make_results_table.py
+```
+
+Run chains **serially**. Each chain holds roughly 6.5 GB resident and peaks near 8 GB (three clients
+each hold a 1.5 GB partition plus the training graph); two concurrent chains exhausted a 16 GB machine
+and panicked the kernel. `jobs/run_chains_serial.sh` and `jobs/run_tonight.sh` encode that constraint.
 
 ---
 

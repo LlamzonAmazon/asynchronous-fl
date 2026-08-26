@@ -1,0 +1,11 @@
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1}, xlabel={Round}]
+\nextgroupplot[title={Loss}, ylabel={Loss}, ymin=0.41, ymax=0.70]
+\addplot[blue, mark=*] coordinates {(0,0.691) (1,0.691) (2,0.691) (3,0.691) (4,0.428)};
+\addplot[green!50!black, dashed] coordinates {(4,0.41) (4,0.70)};
+
+\nextgroupplot[title={Accuracy}, ylabel={Accuracy (\%)}, ymin=55, ymax=81]
+\addplot[red, mark=*] coordinates {(0,56.2) (1,56.2) (2,56.2) (3,56.2) (4,79.2)};
+\addplot[green!50!black, dashed] coordinates {(4,55) (4,81)};
+\end{groupplot}
+\end{tikzpicture}
