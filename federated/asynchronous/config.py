@@ -6,7 +6,14 @@ Adds async-specific knobs: schedule type, deep round cadence, participation,
 bandwidth simulation, and shallow/deep layer prefix mapping.
 """
 
+import os
+
 import torch
+
+# Multi-seed override; must match federated/synchronous/config.py, since the
+# async run reads the partitions the sync run of the same seed produced.
+_SEED_ENV = os.environ.get('FL_SEED')
+_SEED_SUFFIX = f'_s{_SEED_ENV}' if _SEED_ENV else ''
 
 
 class AsyncFLConfig:
@@ -40,7 +47,7 @@ class AsyncFLConfig:
     LEARNING_RATE = 0.001
     EARLY_STOPPING = False    # Global (server-side) early stopping toggle
     PATIENCE = 5              # Patience in rounds for global early stopping
-    RANDOM_SEED = 42          # Global random seed for async FL experiments
+    RANDOM_SEED = int(_SEED_ENV) if _SEED_ENV else 42  # Global random seed for async FL experiments
 
     # ── DEVICE SETTINGS (identical to sync) ────────────────────────────
     DEVICE = 'cpu'
@@ -50,7 +57,7 @@ class AsyncFLConfig:
     # "shallow_only". See schedule.py for available schedule types.
     # In the notation used in the thesis, K = DEEP_EVERY_N_ROUNDS.
     SCHEDULE_TYPE = 'periodic'          # 'periodic' | 'warmup_then_periodic' | 'adaptive_plateau'
-    DEEP_EVERY_N_ROUNDS = 1             # Deep-layer sync period K (2 = full rounds at 2,4; shallow at 1,3)
+    DEEP_EVERY_N_ROUNDS = int(os.environ.get('FL_K', 1))             # Deep-layer sync period K (2 = full rounds at 2,4; shallow at 1,3)
     WARMUP_ROUNDS = 0                   # For warmup_then_periodic schedule
     ADAPTIVE_PATIENCE = 3               # For adaptive_plateau schedule
     ADAPTIVE_MIN_GAP = 2                # Minimum gap between deep rounds (adaptive)
@@ -67,14 +74,14 @@ class AsyncFLConfig:
 
     # ── DATA SOURCE ────────────────────────────────────────────────────
     # Reuse sync's partitioned .pkl files (sync PARTITION_DIR) so both baselines see identical data
-    SYNC_DATA_DIR = './results/sync-federated'
+    SYNC_DATA_DIR = f'./results/sync-federated{_SEED_SUFFIX}'
 
     # ── OUTPUT SETTINGS ────────────────────────────────────────────────
     # RUN_ID is auto-derived: async_IID_4R_3C_1L_K2, async_nonIID_4R_3C_1L_K4, etc.
     # Adds _1Mbps suffix when SIMULATED_BANDWIDTH_BPS is set.
     _RESULTS_BASE = './results/async-federated'
     _BW_SUFFIX = '_1Mbps' if SIMULATED_BANDWIDTH_BPS else ''
-    RUN_ID = f"async_{'IID' if IID else 'nonIID'}_{NUM_ROUNDS}R_{CLIENTS_PER_ROUND}C_{LOCAL_EPOCHS}L_K{DEEP_EVERY_N_ROUNDS}{_BW_SUFFIX}"
+    RUN_ID = f"async_{'IID' if IID else 'nonIID'}_{NUM_ROUNDS}R_{CLIENTS_PER_ROUND}C_{LOCAL_EPOCHS}L_K{DEEP_EVERY_N_ROUNDS}{_BW_SUFFIX}{_SEED_SUFFIX}"
     RESULTS_DIR = f'{_RESULTS_BASE}/{RUN_ID}'
     MODEL_SAVE_PATH = f'{RESULTS_DIR}/global_model.pth'
     PLOT_SAVE_PATH = f'{RESULTS_DIR}/{RUN_ID}.png'

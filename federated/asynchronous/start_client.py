@@ -95,10 +95,10 @@ def main():
         local_epochs=config.LOCAL_EPOCHS,
     )
 
-    print(f"\nClient {client_id}: connecting to server (localhost:8080).\n")
+    print(f"\nClient {client_id}: connecting to server (localhost:{os.environ.get('FL_PORT', '8080')}).\n")
 
     fl.client.start_client(
-        server_address="127.0.0.1:8080",
+        server_address=f"127.0.0.1:{os.environ.get('FL_PORT', '8080')}",
         client=client.to_client(),
         grpc_max_message_length=2147483647,
     )
