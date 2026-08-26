@@ -4,7 +4,17 @@ Configuration for Synchronous Federated Learning
 All settings for the baseline FL implementation.
 """
 
+import os
+
 import torch
+
+# Multi-seed override. Absent -> identical behaviour to the original
+# single-seed configuration, so existing seed-42 results stay reproducible.
+# Set FL_SEED to run a replicate; RUN_ID and PARTITION_DIR are then scoped
+# by seed so concurrent replicates cannot clobber each other's partitions.
+_SEED_ENV = os.environ.get('FL_SEED')
+_SEED_SUFFIX = f'_s{_SEED_ENV}' if _SEED_ENV else ''
+
 
 class FLConfig:
     """Federated Learning configuration"""
@@ -36,7 +46,7 @@ class FLConfig:
     # TRAINING SETTINGS
     BATCH_SIZE = 32           # Batch size for local training
     LEARNING_RATE = 0.001     # Local optimizer learning rate
-    RANDOM_SEED = 42          # Global random seed for FL experiments
+    RANDOM_SEED = int(_SEED_ENV) if _SEED_ENV else 42  # Global random seed for FL experiments
     EARLY_STOPPING = False    # Global (server-side) early stopping toggle
     PATIENCE = 5              # Patience in rounds for global early stopping
     
@@ -54,8 +64,11 @@ class FLConfig:
     # Partition .pkl files are stored in PARTITION_DIR (shared; async reads from here).
     # Run outputs go to RESULTS_DIR = PARTITION_DIR / RUN_ID.
     # RUN_ID is auto-derived: sync_IID_4R_3C_1L, sync_nonIID_4R_3C_1L, etc.
-    PARTITION_DIR = './results/sync-federated'
-    RUN_ID = f"sync_{'IID' if IID else 'nonIID'}_{NUM_ROUNDS}R_{CLIENTS_PER_ROUND}C_{LOCAL_EPOCHS}L"
+    # Seed-scoped so replicates get their own partitions; the partition split
+    # itself is seed-dependent, so sharing one directory across seeds would
+    # corrupt concurrent runs and silently invalidate the variance estimate.
+    PARTITION_DIR = f'./results/sync-federated{_SEED_SUFFIX}'
+    RUN_ID = f"sync_{'IID' if IID else 'nonIID'}_{NUM_ROUNDS}R_{CLIENTS_PER_ROUND}C_{LOCAL_EPOCHS}L{_SEED_SUFFIX}"
     RESULTS_DIR = f'{PARTITION_DIR}/{RUN_ID}'
     MODEL_SAVE_PATH = f'{RESULTS_DIR}/global_model.pth'
     PLOT_SAVE_PATH = f'{RESULTS_DIR}/{RUN_ID}.png'

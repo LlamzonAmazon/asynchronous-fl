@@ -179,7 +179,7 @@ def main():
 
     # ── Start Flower server ──────────────────────────────────────────
     fl.server.start_server(
-        server_address="0.0.0.0:8080",
+        server_address=f"0.0.0.0:{os.environ.get('FL_PORT', '8080')}",
         config=fl.server.ServerConfig(num_rounds=config.NUM_ROUNDS),
         strategy=strategy,
         grpc_max_message_length=2147483647,

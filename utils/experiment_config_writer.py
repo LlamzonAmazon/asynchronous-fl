@@ -9,6 +9,8 @@ for later reference.
 from pathlib import Path
 from datetime import datetime
 
+import torch
+
 
 def write_centralized_config(results_dir: Path, config) -> None:
     """Write experiment_config.txt for a centralized run."""
@@ -29,6 +31,7 @@ def write_centralized_config(results_dir: Path, config) -> None:
         f"  LEARNING_RATE = {config.LEARNING_RATE}",
         f"  PATIENCE = {config.PATIENCE}",
         f"  RANDOM_SEED = {getattr(config, 'RANDOM_SEED', 'N/A')}",
+        f"  TORCH_THREADS = {torch.get_num_threads()}",
         "",
         "MODEL",
         f"  NUM_LEADS = {config.NUM_LEADS}",
@@ -65,6 +68,7 @@ def write_sync_config(results_dir: Path, config) -> None:
         f"  BATCH_SIZE = {config.BATCH_SIZE}",
         f"  LEARNING_RATE = {config.LEARNING_RATE}",
         f"  RANDOM_SEED = {getattr(config, 'RANDOM_SEED', 'N/A')}",
+        f"  TORCH_THREADS = {torch.get_num_threads()}",
         "",
         "MODEL",
         f"  NUM_LEADS = {config.NUM_LEADS}",
@@ -103,6 +107,7 @@ def write_async_config(results_dir: Path, config) -> None:
         f"  BATCH_SIZE = {config.BATCH_SIZE}",
         f"  LEARNING_RATE = {config.LEARNING_RATE}",
         f"  RANDOM_SEED = {getattr(config, 'RANDOM_SEED', 'N/A')}",
+        f"  TORCH_THREADS = {torch.get_num_threads()}",
         "",
         "MODEL",
         f"  NUM_LEADS = {config.NUM_LEADS}",
