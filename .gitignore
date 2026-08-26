@@ -22,3 +22,35 @@ async-federated/
 centralized/
 sync-federated/
 *.pth
+
+# Multi-seed replicate outputs (FL_SEED-scoped)
+sync-federated_s*/
+async-federated_s*/
+results/sync-federated_s*/
+results/async-federated/*_s*/
+jobs/logs/
+
+# Working notes (reviewer comments, correspondence, submission IDs): never public
+notes/
+
+# Local paper drafts (v1-v3, thesis source); the public copy is paper/
+GLOBECOM/
+
+# Dead / partial run directories and Spotlight marker
+results/_*/
+results/.metadata_never_index
+
+# Local editor and agent tooling
+.cursor/
+.cursorrules
+.claude/
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
