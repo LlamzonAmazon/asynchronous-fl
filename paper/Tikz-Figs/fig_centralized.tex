@@ -1,0 +1,18 @@
+\begin{tikzpicture}
+\begin{groupplot}[
+    group style={group size=2 by 1, horizontal sep=1.0cm},
+    xlabel={Epoch},
+]
+\nextgroupplot[title={Loss}, ylabel={Loss}, ymin=0.28, ymax=0.42]
+\addplot[blue] coordinates {(1,0.412) (2,0.358) (3,0.342) (4,0.336)};
+\addplot[red] coordinates {(1,0.334) (2,0.297) (3,0.350) (4,0.290)};
+\addplot[gray, dashed] coordinates {(1,0.3267) (4,0.3267)};
+\legend{Train, Val, Test}
+
+\nextgroupplot[title={Accuracy}, ylabel={Accuracy (\%)}, ymin=81, ymax=88]
+\addplot[blue] coordinates {(1,81.4) (2,84.5) (3,85.4) (4,85.6)};
+\addplot[red] coordinates {(1,86.4) (2,87.2) (3,85.0) (4,87.2)};
+\addplot[gray, dashed] coordinates {(1,84.08) (4,84.08)};
+\legend{Train, Val, Test}
+\end{groupplot}
+\end{tikzpicture}
