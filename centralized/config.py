@@ -47,7 +47,7 @@ class Config:
     
     # DATA PREPROCESSING
     NORMALIZE = True # Whether to normalize ECG signals
-    VALIDATION_SPLIT = 0.1 # 10% of training data (fold 10) used for validation
+    VALIDATION_SPLIT = 0.1 # 10% of the folds 1-9 development pool, held out for validation
     
     # LOGGING
     PRINT_EVERY = 10 # Print Epoch progress every N batches

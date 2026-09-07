@@ -20,7 +20,7 @@ class PTBXLDataLoader:
             data_path: Path to PTB-XL dataset directory
         """
         self.data_path = Path(data_path)
-        self.sampling_rate = 100  # Using 100Hz version for efficiency
+        self.sampling_rate = 500  # Records are loaded from filename_hr, the 500 Hz set
         
         if not self.data_path.exists():
             print(f"Dataset not found at {self.data_path}")
