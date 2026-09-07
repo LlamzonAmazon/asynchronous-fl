@@ -78,7 +78,8 @@ def evaluate_global_model(server_round: int, parameters, config):
     )
 
     # Global early stopping (server-side), purely for analysis/logging.
-    # We track the best validation loss and how many rounds since it improved.
+    # We track the best test loss and how many rounds since it improved. Disabled by
+    # default (early_stopping_enabled=False), so it never influences training.
     es_enabled = config.get("early_stopping_enabled", False)
     if es_enabled:
         state = config.setdefault(
