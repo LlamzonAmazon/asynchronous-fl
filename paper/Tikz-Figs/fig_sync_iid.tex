@@ -1,11 +1,11 @@
 \begin{tikzpicture}
 \begin{groupplot}[group style={group size=2 by 1, horizontal sep=1cm}, xlabel={Round}]
 \nextgroupplot[title={Loss}, ylabel={Loss}, ymin=0.35, ymax=0.70]
-\addplot[blue, mark=*] coordinates {(0,0.691) (1,0.650) (2,0.414) (3,0.391) (4,0.367)};
+\addplot[blue, mark=*] coordinates {(0,0.691) (1,0.650) (2,0.415) (3,0.431) (4,0.402)};
 \legend{Loss}
 
 \nextgroupplot[title={Accuracy}, ylabel={Accuracy (\%)}, ymin=55, ymax=85]
-\addplot[red, mark=*] coordinates {(0,56.2) (1,68.5) (2,81.3) (3,81.4) (4,83.7)};
+\addplot[red, mark=*] coordinates {(0,56.2) (1,68.5) (2,81.4) (3,80.4) (4,81.9)};
 \legend{Accuracy}
 \end{groupplot}
 \end{tikzpicture}
