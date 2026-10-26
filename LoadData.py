@@ -226,7 +226,7 @@ Deep layers learn SLOW patterns that are calculated over longer periods of time;
 - "What's the big picture across 10 seconds?"
 - Deep layers INTERPRET what those shapes mean
 
-My thesis is betting on the hypothesis that deep layers don't need every update because they're learning slower, more stable concepts/patterns.
+The layer-wise schedule assumes deep layers do not need an update every round because they learn slower, more stable patterns.
 
 
 EXAMPLE ECG MODEL:

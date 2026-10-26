@@ -30,10 +30,10 @@ results/sync-federated_s*/
 results/async-federated/*_s*/
 jobs/logs/
 
-# Working notes (reviewer comments, correspondence, submission IDs): never public
+# Local working notes
 notes/
 
-# Local paper drafts (v1-v3, thesis source); the public copy is paper/
+# Local paper drafts; the public copy is paper/
 GLOBECOM/
 
 # Dead / partial run directories and Spotlight marker

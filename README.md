@@ -11,8 +11,8 @@ Thomas Llamzon, Honours Specialization in Computer Science (BSc), Western Unive
 T. Llamzon, M. Fouda, M. I. Ibrahem, S. Hashima, Z. Md Fadlullah.
 Accepted to **IEEE GLOBECOM 2026** (Selected Areas in Communications: e-Health), Macau, December 2026.
 
-The copy in [`paper/`](paper/) is the **accepted manuscript, camera-ready in review**. It is not the
-final published version; the version of record will appear in IEEE Xplore. Source (`main-conference.tex`,
+The copy in [`paper/`](paper/) is the **accepted manuscript**. The version of record will appear in
+IEEE Xplore. Source (`main-conference.tex`,
 `ref.bib`, `Tikz-Figs/`) is included so the figures can be regenerated from the run artifacts.
 
 © 2026 IEEE. Personal use of this material is permitted. Permission from IEEE must be obtained for all
@@ -167,7 +167,7 @@ asynchronous-fl/
 │   └── stall_watchdog.sh, start_watchdog.sh, queue_seed13.sh
 │
 ├── paper/
-│   ├── main-conference.pdf    # Accepted manuscript (IEEE GLOBECOM 2026), camera-ready in review
+│   ├── main-conference.pdf    # Accepted manuscript (IEEE GLOBECOM 2026)
 │   ├── main-conference.tex    # Paper source
 │   ├── ref.bib
 │   └── Tikz-Figs/             # pgfplots figures, one .tex per experiment curve

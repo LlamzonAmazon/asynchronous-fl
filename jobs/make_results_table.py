@@ -1,17 +1,14 @@
 #!/usr/bin/env python3
 """
-Emit the camera-ready results table and every figure quoted in prose,
-computed directly from validated run artifacts.
+Emit the results table and every figure quoted in prose, computed directly
+from validated run artifacts.
 
     python jobs/make_results_table.py
 
-Exists because the submitted Table I contains three transcription errors in
-the Upload column (1699.99, 1700.02 and 854.98 MiB against true values of
-1699.75, 1699.75 and 855.01) and quotes accuracies that are single runs
-without saying so. Numbers that appear in the paper should be generated, not
-retyped.
+Every number that appears in the paper is generated here so that none is
+retyped by hand.
 
-Two conventions are enforced here that the submitted table does not:
+Two conventions are enforced:
 
   1. ONE BYTE CONVENTION FOR BOTH ARMS. The synchronous counter sums
      `p.numel() for p in model.parameters()`, which omits BatchNorm running
