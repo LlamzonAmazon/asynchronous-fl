@@ -9,7 +9,6 @@
 }
 
 
-
 @article{beutel2020,
   author       = {Beutel, Daniel J. and Topal, Taner and Mathur, Akhil and Qiu, Xinchi and Parcollet, Titouan and Lane, Nicholas D.},
   title        = {Flower: A Friendly Federated Learning Research Framework},
@@ -126,52 +125,6 @@
 }
 
 
-
-
-
-
-@misc{wagner2022,
-  author    = {Wagner, Patrick and Strodthoff, Nils and Bousseljot, Ralf and Samek, Wojciech
-               and Schaeffter, Tobias},
-  title     = {{PTB-XL}, a Large Publicly Available Electrocardiography Dataset (version 1.0.3)},
-  year      = {2022},
-  publisher = {PhysioNet},
-  doi       = {10.13026/kfzx-aw45}
-}
-
-@inproceedings{paszke2019,
-  author    = {Paszke, Adam and Gross, Sam and Massa, Francisco and Lerer, Adam and Bradbury,
-               James and Chanan, Gregory and Killeen, Trevor and Lin, Zeming and Gimelshein,
-               Natalia and Antiga, Luca and Desmaison, Alban and K{\"o}pf, Andreas and Yang,
-               Edward and DeVito, Zachary and Raison, Martin and Tejani, Alykhan and
-               Chilamkurthy, Sasank and Steiner, Benoit and Fang, Lu and Bai, Junjie and
-               Chintala, Soumith},
-  title     = {{PyTorch}: An Imperative Style, High-Performance Deep Learning Library},
-  booktitle = {Advances in Neural Information Processing Systems},
-  volume    = {32},
-  pages     = {8024--8035},
-  year      = {2019},
-  url       = {https://proceedings.neurips.cc/paper/2019/hash/bdbca288fee7f92f2bfa9f7012727740-Abstract.html}
-}
-
-@misc{beutel2020,
-  author        = {Beutel, Daniel J. and Topal, Taner and Mathur, Akhil and Qiu, Xinchi
-                   and Parcollet, Titouan and Lane, Nicholas D.},
-  title         = {Flower: A Friendly Federated Learning Research Framework},
-  year          = {2020},
-  eprint        = {2007.14390},
-  archivePrefix = {arXiv}
-}
-
-@misc{llamzon2026,
-  author = {{LlamzonAmazon}},
-  title  = {{GitHub} -- {LlamzonAmazon/asynchronous-fl}: A Study of Asynchronous
-             Weight-Updating Federated Learning for Health {IoT} Devices},
-  year   = {2026},
-  url    = {https://github.com/LlamzonAmazon/asynchronous-fl}
-}
-
-
 @inproceedings{lin2018deepgradient,
 title={Deep Gradient Compression: Reducing the Communication Bandwidth for Distributed Training},
 author={Yujun Lin and Song Han and Huizi Mao and Yu Wang and Bill Dally},
@@ -181,11 +134,14 @@ url={https://openreview.net/forum?id=SkhQHMW0W},
 }
 
 @inproceedings{karimireddy2020scaffold,
-author = {Karimireddy, Sai Praneeth and Kale, Satyen and Mohri, Mehryar and Reddi, Sashank J. and Stich, Sebastian U. and Suresh, Ananda Theertha},
-title = {{SCAFFOLD}: stochastic controlled averaging for federated learning},
-year = {2020},
-booktitle = {Proceedings of the 37th International Conference on Machine Learning (ICML)},
-pages = {476},
+  author    = {Karimireddy, Sai Praneeth and Kale, Satyen and Mohri, Mehryar and
+               Reddi, Sashank J. and Stich, Sebastian U. and Suresh, Ananda Theertha},
+  title     = {{SCAFFOLD}: Stochastic Controlled Averaging for Federated Learning},
+  booktitle = {Proceedings of the 37th International Conference on Machine Learning (ICML)},
+  series    = {PMLR},
+  volume    = {119},
+  pages     = {5132--5143},
+  year      = {2020},
 }
 
 
@@ -205,16 +161,17 @@ url={https://openreview.net/forum?id=LkFG3lB13U5}
 }
 
 @inproceedings{wang2020tackling,
-author = {Wang, Jianyu and Liu, Qinghua and Liang, Hao and Joshi, Gauri and Poor, H. Vincent},
-title = {Tackling the objective inconsistency problem in heterogeneous federated optimization},
-year = {2020},
-booktitle = {Proceedings of the 34th International Conference on Neural Information Processing Systems (NIPS)},
-pages = {638},
+  author    = {Wang, Jianyu and Liu, Qinghua and Liang, Hao and Joshi, Gauri and Poor, H. Vincent},
+  title     = {Tackling the Objective Inconsistency Problem in Heterogeneous Federated Optimization},
+  booktitle = {Advances in Neural Information Processing Systems},
+  volume    = {33},
+  pages     = {7611--7623},
+  year      = {2020},
 }
 
 @inproceedings{xu2021layerwise,
   title     = {Layer-wise Adaptive Model Aggregation for Scalable Federated Learning},
-  author    = {Lee, Sunwoo and Zhang, Tuo and Avestimehr, Salman},
+  author    = {Lee, Sunwoo and Zhang, Tuo and Avestimehr, A. Salman},
   booktitle = {Proceedings of the AAAI Conference on Artificial Intelligence},
   volume    = {37},
   number    = {7},
@@ -237,4 +194,16 @@ pages = {3320–3328},
   author={Caldas, Sebastian and Wu, Peter and Li, Tian and Kone{\v{c}}n{\'y}, Jakub and McMahan, H. Brendan and Smith, Virginia and Talwalkar, Ameet},
   journal={arXiv preprint arXiv:1812.01097},
   year={2018}
+}
+
+@article{chen2020layerwise,
+  author  = {Chen, Yang and Sun, Xiaoyan and Jin, Yaochu},
+  title   = {Communication-Efficient Federated Deep Learning With Layerwise Asynchronous
+             Model Update and Temporally Weighted Aggregation},
+  journal = {IEEE Transactions on Neural Networks and Learning Systems},
+  volume  = {31},
+  number  = {10},
+  pages   = {4229--4238},
+  year    = {2020},
+  doi     = {10.1109/TNNLS.2019.2953131}
 }

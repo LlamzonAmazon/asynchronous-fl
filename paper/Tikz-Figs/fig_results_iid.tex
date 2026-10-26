@@ -1,0 +1,17 @@
+% Generated from results/*/checkpoints/all_metrics.json. Do not hand-edit.
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1, horizontal sep=1.1cm}, xlabel={Round}, xtick={0,1,2,3,4}]
+\nextgroupplot[title={Loss}, ylabel={Loss}, ymin=0.34, ymax=0.72, legend style={at={(0.98,0.98)}, anchor=north east, font=\tiny}]
+\addplot[black,      mark=*] coordinates {(0,0.6911) (1,0.6501) (2,0.4150) (3,0.4312) (4,0.4015)};
+\addplot[blue,       mark=square*] coordinates {(0,0.6911) (1,0.6501) (2,0.4133) (3,0.3904) (4,0.3662)};
+\addplot[red,        mark=triangle*] coordinates {(0,0.6911) (1,0.6910) (2,0.5297) (3,0.4959) (4,0.3675)};
+\addplot[orange!85!black, mark=diamond*] coordinates {(0,0.6911) (1,0.6910) (2,0.6907) (3,0.6907) (4,0.4285)};
+\legend{Sync FedAvg, $K=1$, $K=2$, $K=4$}
+
+\nextgroupplot[title={Accuracy}, ylabel={Accuracy (\%)}, ymin=52, ymax=88]
+\addplot[black,      mark=*] coordinates {(0,56.19) (1,68.47) (2,81.39) (3,80.44) (4,81.85)};
+\addplot[blue,       mark=square*] coordinates {(0,56.19) (1,68.47) (2,81.39) (3,81.53) (4,83.71)};
+\addplot[red,        mark=triangle*] coordinates {(0,56.19) (1,56.19) (2,72.70) (3,77.84) (4,83.08)};
+\addplot[orange!85!black, mark=diamond*] coordinates {(0,56.19) (1,56.19) (2,56.19) (3,56.19) (4,79.21)};
+\end{groupplot}
+\end{tikzpicture}
