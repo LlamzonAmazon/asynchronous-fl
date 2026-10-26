@@ -3,6 +3,12 @@
 %Register a paper for 2026 IEEE Global Communications Conference: Selected Areas in Communications: E-Health
 
 \documentclass[10pt,conference]{IEEEtran}
+% IEEE Conference eXpress states hard minimum margins for US Letter:
+% top 0.75in, bottom 1.0in, sides 0.625in. IEEEtran's stock letterpaper
+% geometry gives a 0.652in top margin, which is UNDER that minimum, so the
+% margins are set explicitly. Each value clears the minimum with slack, and
+% this spec was chosen because it is the one that holds the paper at 7 pages.
+\usepackage[top=0.78in,bottom=1.05in,left=0.65in,right=0.65in]{geometry}
 \IEEEoverridecommandlockouts
 % The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
 \usepackage{algorithm}
@@ -123,27 +129,27 @@ Sherief.hashima@riken.jp, zfadlullah@ieee.org
 \maketitle
 
 \begin{abstract}
-Federated Learning (FL) enables collaborative model training across distributed Internet of Things (IoT) health devices without centralizing sensitive patient data. However, standard synchronous FL suffers from high communication overhead, as clients upload the entire model parameters in each round, severely constraining bandwidth-limited IoT devices. This paper proposes a periodic asynchronous layer-wise update schedule that partitions model parameters into shallow and deep groups, transmitting shallow parameters every round and synchronizing deep parameters every K rounds. We evaluate this approach for ECG classification on the PTB-XL dataset using a 1D Convolutional Neural Network across centralized, synchronous, and asynchronous FL architectures. In a controlled 3-client, 4-round simulation, asynchronous FL with K = 2 reduces client upload volume by 49.70\% and total communication by 24.85\% with no measurable cost in accuracy. Across three random seeds under IID partitioning, asynchronous K = 2 reaches 83.18\% mean accuracy (standard deviation 0.76) against a synchronous FedAvg baseline of 82.68\% (standard deviation 0.98), a mean paired difference of 0.50 percentage points that is not statistically distinguishable from zero (p = 0.31). Under non-IID partitioning with a Dirichlet concentration of 0.5, a single run reaches 84.62\% against a synchronous baseline of 84.53\%. At K = 4, upload reduction reaches 74.55\% in exchange for a clear accuracy loss (79.21\% under IID, single run). These results demonstrate that periodic layer-wise scheduling can substantially reduce uplink communication cost in resource-constrained FL deployments while preserving acceptable model utility.
+Federated Learning (FL) enables collaborative model training across distributed Internet of Things (IoT) health devices without centralizing sensitive patient data. However, standard synchronous FL suffers from high communication overhead, as clients upload the entire model parameters in each round, severely constraining bandwidth-limited IoT devices. This paper proposes a periodic asynchronous layer-wise update schedule that partitions model parameters into shallow and deep groups, transmitting shallow parameters every round and synchronizing deep parameters every K rounds. We evaluate this approach for electrocardiogram (ECG) classification on the PTB-XL dataset using a 1D Convolutional Neural Network (CNN) across centralized, synchronous, and asynchronous FL architectures. In a controlled 3-client, 4-round simulation, asynchronous FL with K = 2 reduces client upload volume by 49.70\% and total communication by 24.85\% with no measurable accuracy cost. Across three random seeds under IID partitioning, asynchronous K = 2 reaches 83.18\% mean accuracy (standard deviation 0.76) against a synchronous FedAvg baseline of 82.68\% (standard deviation 0.98), a mean paired difference of 0.50 percentage points that is not statistically distinguishable from zero (p = 0.31). Under non-IID partitioning with a Dirichlet concentration of 0.5, a single run reaches 84.62\% against a synchronous baseline of 84.53\%. At K = 4, upload reduction reaches 74.55\% at the cost of a clear accuracy loss (79.21\% under IID, single run). These results demonstrate that periodic layer-wise scheduling can substantially reduce uplink communication cost in resource-constrained FL deployments while preserving acceptable model utility.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Federated Learning, IoT, ECG Classification, Communication Efficiency, Asynchronous Updates
+Federated learning, IoT, ECG classification, communication efficiency
 \end{IEEEkeywords}
 
 
 \section{Introduction}
 
-Federated Learning (FL) enables collaborative model training across distributed Internet of Things (IoT) devices while preserving data privacy, making it suitable for healthcare applications such as wearable electrocardiogram (ECG) monitoring. In these settings, devices generate sensitive physiological signals that cannot be centralized due to privacy and regulatory constraints. FL addresses data locality by exchanging model parameters instead of raw data, but it introduces a major bottleneck, communication cost. Fig.~\ref{fig:privacy_fl} illustrates the privacy-preserving learning setting, where raw ECG data remain local and only scheduled model updates are communicated.
+Federated Learning (FL) enables collaborative model training across distributed Internet of Things (IoT) devices while preserving data privacy \cite{mcmahan2017,yang2019}, making it suitable for healthcare applications such as wearable electrocardiogram (ECG) monitoring \cite{tariq2024}. In these settings, devices generate sensitive physiological signals that cannot be centralized due to privacy and regulatory constraints. FL addresses data locality by exchanging model parameters instead of raw data, but it introduces a major bottleneck: communication cost. Fig.~\ref{fig:privacy_fl} illustrates the privacy-preserving learning setting, where raw ECG data remain local, and only scheduled model updates are communicated.
 
-Standard FL, particularly Federated Averaging (FedAvg), follows a synchronous round-based protocol where clients download the global model, perform local training, and upload the complete updated model to the server. For deep ECG classifiers with millions of parameters, repeated full-model uploads dominate the cost of training. This is especially problematic for IoT health devices, where uplink bandwidth, energy, and connectivity are constrained.
+Standard FL, particularly Federated Averaging (FedAvg) \cite{mcmahan2017}, follows a synchronous round-based protocol where clients download the global model, perform local training, and upload the complete updated model to the server. For deep ECG classifiers with millions of parameters, repeated full-model uploads dominate training cost \cite{konecny2016}. This is especially problematic for IoT health devices, where Uplink (UL) bandwidth, energy, and connectivity are constrained.
 
-%In addition to bandwidth constraints, communication inefficiency directly impacts energy consumption and system latency in IoT health deployments. Frequent uplink transmissions drain battery-operated wearable devices and increase training delay under intermittent connectivity. Moreover, network variability across devices introduces additional inefficiencies in synchronous protocols, where faster clients remain idle while waiting for slower participants. These limitations highlight the need for communication-aware learning strategies that reduce unnecessary transmissions without sacrificing model performance.
+%In addition to bandwidth constraints, communication inefficiency directly impacts energy consumption and system latency in IoT health deployments. Frequent UL transmissions drain battery-operated wearable devices and increase training delay under intermittent connectivity. Moreover, network variability across devices introduces additional inefficiencies in synchronous protocols, where faster clients remain idle while waiting for slower participants. These limitations highlight the need for communication-aware learning strategies that reduce unnecessary transmissions without sacrificing model performance.
 
-Communication inefficiency also affects energy consumption and latency in IoT health deployments, where frequent uplink transmissions draw on battery-powered devices and can increase training delay. This motivates communication-aware learning strategies that reduce unnecessary transmissions without sacrificing performance; we address the transmitted volume directly and treat the downstream energy and latency effects as motivation rather than as measured outcomes.
+Communication inefficiency also affects energy consumption and latency in IoT health deployments, where frequent UL transmissions draw on battery-powered devices and can increase training delay. This motivates communication-aware learning strategies that reduce unnecessary transmissions without sacrificing performance \cite{konecny2016strategies,tariq2024}; we address the transmitted volume directly and treat the downstream energy and latency effects as motivation rather than as measured outcomes.
 
-Two properties of deep networks make uniform synchronization wasteful. First, parameter mass is highly uneven: in our ECG classifier the two convolutional blocks nearest the input account for $0.60\%$ of all parameters, so the uplink cost is almost entirely attributable to the remaining layers. Second, networks exhibit layer-wise convergence heterogeneity, with shallow layers stabilizing early while deeper layers continue adapting, which means the deep group is also the group best able to tolerate delayed aggregation. Together these suggest synchronizing the small, foundational shallow group at every round and deferring the large, staleness-tolerant deep group.
+One property of deep networks makes uniform synchronization wasteful: parameter mass is highly uneven. In our ECG classifier, the two convolutional blocks nearest the input account for $0.60\%$ of all parameters, so the UL cost is almost entirely attributable to the remaining layers. Synchronizing the small shallow group at every round is therefore nearly free, and deferring the large deep group is the only choice that materially reduces UL volume. We do not additionally assume that deep layers converge more slowly; Section III reports a direct measurement showing that the two groups drift at comparable rates in this model, so the schedule is justified by transmission cost and by a bounded staleness of at most $K-1$ rounds rather than by differential convergence speed.
 
-A key inefficiency is that conventional FL treats all model layers uniformly as depicted in Fig.~\ref{fig:big_picture}. However, deep networks learn hierarchically. Shallow layers capture general low-level signal features, while deeper layers encode task-specific representations and classification boundaries. This motivates a layer-aware communication strategy where different parts of the model are synchronized at different temporal frequencies.
+A key inefficiency is that conventional FL treats all model layers uniformly as depicted in Fig.~\ref{fig:big_picture}. However, deep networks learn hierarchically. Shallow layers capture general low-level signal features, while deeper layers encode task-specific representations and classification boundaries \cite{yosinski2014}. This motivates a layer-aware communication strategy where different parts of the model are synchronized at different temporal frequencies.
 
 
 \begin{figure}[t]
@@ -251,7 +257,7 @@ node[pos=0.58, below, sloped, font=\tiny]{$\theta$ update} (srv.south west);
 % \draw[arr] (srv) -- (s);
 % \draw[arr] (srv) -- (d);
 
-% \node[align=center] at (0,-3.0) {Layer-wise temporal scheduling reduces uplink cost while preserving standard FL operation.};
+% \node[align=center] at (0,-3.0) {Layer-wise temporal scheduling reduces UL cost while preserving standard FL operation.};
 % \end{tikzpicture}
 % \caption{Big-picture view of the proposed asynchronous layer-wise FL framework for IoT health devices.}
 % \label{fig:big_picture}
@@ -326,20 +332,22 @@ arr/.style={-{Latex[length=1.8mm]}, thick}
 
 %From a learning perspective, deep neural networks exhibit layer-wise convergence heterogeneity. Early convolutional layers tend to stabilize rapidly as they capture general signal characteristics, while deeper layers continue adapting to task-specific patterns. This suggests that enforcing uniform synchronization frequency across all layers is suboptimal. Instead, communication schedules can be aligned with the intrinsic learning dynamics of different parameter groups.
 
-In this paper we study the simplest realizable form of layer-wise update scheduling: a fixed partition of the model into shallow and deep parameter groups, with shallow layers synchronized every round and deep layers every $K$ rounds. Unlike adaptive layer-wise schemes, the partition and the interval are set in advance, so the server maintains no per-layer statistics and the method reduces to a scheduling rule over unmodified FedAvg. We characterize the resulting communication and accuracy behaviour on PTB-XL ECG classification under IID and non-IID partitions. At $K=2$ upload cost falls by 49.70\% with accuracy statistically indistinguishable from synchronous FL over three seeds, and at $K=4$ upload reduction reaches 74.55\% with a clear accuracy cost.
+In this paper, we study the simplest realizable form of layer-wise update scheduling: a fixed partition of the model into shallow and deep parameter groups, with shallow layers synchronized every round and deep layers every $K$ rounds. Unlike adaptive layer-wise schemes \cite{xu2021layerwise}, the partition and the interval are set in advance, so the server maintains no adaptive per-layer statistics and the method reduces to a scheduling rule over unmodified FedAvg. We characterize the resulting communication and accuracy behaviour on PTB-XL ECG classification under IID and non-IID partitions. At $K=2$ upload cost falls by 49.70\% with accuracy statistically indistinguishable from synchronous FL over three seeds, and at $K=4$ upload reduction reaches 74.55\% with a clear accuracy cost.
 
-The remainder of this paper is organized as follows. Section II reviews related work. Section III presents the considered system model and problem formulation. Section IV describes the proposed methodology and algorithm. Section V provides complexity analysis. Section VI presents performance evaluation. Section VII concludes the paper.
+The remainder of this paper is organized as follows. Section II reviews related work. Section III presents the considered system model and problem formulation. Section IV describes the proposed methodology, the scheduling algorithm, and its communication and complexity analysis. Section V presents the performance evaluation. Section VI concludes the paper.
 \section{Related Work}
 
 Federated Learning (FL) was popularized by McMahan et al. \cite{mcmahan2017} through the Federated Averaging (FedAvg) algorithm, where a central server coordinates training by aggregating locally updated client models. Subsequent work by Yang et al. \cite{yang2019} formalized the FL paradigm into horizontal, vertical, and transfer settings. Healthcare IoT applications, such as ECG monitoring, fall under horizontal FL, where devices share the same feature space but operate on different patient data distributions.
 
-A major limitation of FL is communication overhead. Konečný et al. \cite{konecny2016} showed that communication rounds dominate overall training time, particularly in heterogeneous environments with varying device and network capabilities. To address this, prior work has focused on reducing the size of transmitted updates. Kone\v{c}n\'y et al. \cite{konecny2016strategies} introduced structured and sketched updates, including sparse parameter selection, probabilistic quantization, and low-rank factorization, demonstrating substantial reductions in uplink volume; these techniques are surveyed in \cite{hartmann2018}. While compression-based approaches \cite{lin2018deepgradient} and optimization-aware methods \cite{reddi2021adaptive,karimireddy2020scaffold} have been extensively studied for reducing communication overheads, the aforementioned approaches apply uniform compression across all model layers and do not exploit the hierarchical structure of deep networks.
+A major limitation of FL is communication overhead. Konečný et al. \cite{konecny2016} showed that communication rounds dominate overall training time, particularly in heterogeneous environments with varying device and network capabilities. To address this, prior work has focused on reducing the size of transmitted updates. Kone\v{c}n\'y et al. \cite{konecny2016strategies} introduced structured and sketched updates, including sparse parameter selection, probabilistic quantization, and low-rank factorization, demonstrating substantial reductions in UL volume; these techniques are surveyed in \cite{hartmann2018}. While compression-based approaches \cite{lin2018deepgradient} and optimization-aware methods \cite{reddi2021adaptive,karimireddy2020scaffold} have been extensively studied for reducing communication overheads, the aforementioned approaches apply uniform compression across all model layers and do not exploit the hierarchical structure of deep networks.
 
 An alternative direction is to modify the computation architecture. Yuan et al. \cite{yuan2020} proposed a split learning approach for healthcare IoT, where shallow layers are executed on-device and deeper layers are offloaded to a central server. Combined with sparsification of exchanged activations and gradients, this method achieves substantial communication reduction while maintaining accuracy. However, it changes the standard FL architecture and retains synchronous round assumptions, without adapting communication frequency across different parts of the model.
 
-Another line of work focuses on relaxing synchronization constraints. Asynchronous FL methods \cite{xie2019asynchronous} allow clients to update the server without strict round barriers, improving system efficiency under heterogeneous conditions. While effective in reducing idle time, these approaches typically treat the model as a single parameter block and do not differentiate between layers in terms of communication frequency. Recent surveys \cite{tariq2024} further highlight that communication efficiency remains a central challenge in IoT and edge FL deployments, especially under non-IID data and unreliable networks. Recent work has explored layer-wise adaptive federated learning \cite{xu2021layerwise}, but without incorporating temporal scheduling of parameter updates within standard FL rounds.
+Another line of work focuses on relaxing synchronization constraints. Asynchronous FL methods \cite{xie2019asynchronous} allow clients to update the server without strict round barriers, improving system efficiency under heterogeneous conditions. While effective in reducing idle time, these approaches typically treat the model as a single parameter block and do not differentiate between layers in terms of communication frequency. Recent surveys \cite{tariq2024} further highlight that communication efficiency remains a central challenge in IoT and edge FL deployments, especially under non-IID data and unreliable networks.
 
-Layer-wise scheduling itself is not new. FedLAMA \cite{xu2021layerwise} adjusts the aggregation interval in a layer-wise manner, jointly considering model discrepancy and communication cost, and maintains per-layer statistics at the server to do so. Despite these advances, layer-wise scheduling has so far been posed as a runtime adaptation problem, in which per-layer synchronization intervals are derived from measured model discrepancy and maintained by the server. We ask a narrower question: how much of the benefit survives when the schedule is fixed in advance and requires no measurement, no coordination, and no per-layer state at all. Our contribution is therefore not the idea of layer-wise scheduling but a characterization of its simplest realizable form, a static two-group partition chosen by parameter mass with a single constant interval, evaluated in a resource-constrained IoT health setting.
+Layer-wise scheduling itself is not new, and the closest prior work shares our core mechanism. Chen et al. \cite{chen2020layerwise} categorize the layers of a deep network into shallow and deep groups and update the deep-layer parameters less frequently than the shallow-layer parameters in order to reduce client-server communication. We do not claim that mechanism as novel. Their scheme couples the layerwise asynchronous update with temporally weighted aggregation, in which previously trained local models are reweighted by recency at the server, so the aggregation rule itself is modified. FedLAMA \cite{xu2021layerwise} takes the adaptive route instead: it adjusts the aggregation interval in a layer-wise manner, jointly considering model discrepancy and communication cost, and maintains per-layer discrepancy statistics at the server to do so.
+
+Both lines therefore add machinery on top of the schedule, either a new aggregation rule or a runtime adaptation loop. We ask a narrower question: how much of the benefit survives when the schedule is fixed in advance, the aggregation rule is left as plain FedAvg, and the server keeps no adaptive per-layer statistics at all. Our contribution is accordingly not the idea of layer-wise scheduling but a characterization of its simplest realizable form, a static two-group partition chosen by parameter mass with a single constant interval, with byte-exact communication accounting in a resource-constrained IoT health setting.
 
 \section{Considered System Model and Problem Formulation}
 
@@ -419,7 +427,7 @@ In standard synchronous FL, each participating client uploads the full parameter
 \begin{equation}
 \boldsymbol{\theta}=(\boldsymbol{\theta}_S,\boldsymbol{\theta}_D),
 \end{equation}
-where $\boldsymbol{\theta}_S$ contains early convolutional layers and $\boldsymbol{\theta}_D$ contains later convolutional and fully connected layers. The goal is to reduce uplink communication while preserving model utility. This gives the following communication-aware design problem:
+where $\boldsymbol{\theta}_S$ contains early convolutional layers and $\boldsymbol{\theta}_D$ contains later convolutional and fully connected layers. The goal is to reduce UL communication while preserving model utility. This gives the following communication-aware design problem:
 \begin{equation}
 \label{eq:uplink_budget}
 \min_{\{\boldsymbol{\theta}^t\}_{t=1}^{T}}
@@ -429,33 +437,33 @@ F(\boldsymbol{\theta}^T)
 \quad
 \sum_{t=1}^{T}C_{\text{up}}(t)\leq B,
 \end{equation}
-where $B$ is the available uplink budget. This formulation follows standard federated optimization frameworks \cite{mcmahan2017,li2020federated}.  \noindent
-The formulation in \eqref{eq:uplink_budget} implicitly assumes that all model parameters contribute equally to the communication cost, which is not the case in deep neural networks. In our ECG classifier the two convolutional blocks nearest the input hold $0.60\%$ of the parameters, while the remaining layers hold $99.40\%$. Uplink cost is therefore almost entirely determined by the deep group, and synchronizing the shallow group is nearly free. This asymmetry, not convergence speed, is what makes a differentiated schedule worthwhile: sending the inexpensive group at every round and the expensive group periodically is the only partition that yields a meaningful reduction in uplink volume.
+where $B$ is the available UL budget. This formulation follows standard federated optimization frameworks \cite{mcmahan2017,li2020federated}.  \noindent
+The formulation in \eqref{eq:uplink_budget} implicitly assumes that all model parameters contribute equally to the communication cost, which is not the case in deep neural networks. In our ECG classifier, the two convolutional blocks nearest the input hold $0.60\%$ of the parameters, while the remaining layers hold $99.40\%$. UL cost is therefore almost entirely determined by the deep group, and synchronizing the shallow group is nearly free. This asymmetry, not convergence speed, is what makes a differentiated schedule worthwhile: sending the inexpensive group at every round and the expensive group periodically is the only partition that yields a meaningful reduction in UL volume.
 
-Convergence heterogeneity enters as a separate question, namely which group can tolerate being stale. Prior work on feature transferability \cite{yosinski2014} shows that early layers learn general representations while deeper layers specialize for the target task. Deep layers encode slower-changing, task-specific structure and therefore tolerate delayed aggregation, whereas the shallow layers form the shared feature extractor that every deep layer builds upon. Keeping that extractor consistent across clients at every round is what keeps the periodically aggregated deep layers mutually coherent. The two arguments are complementary: parameter mass determines which group is expensive to send, and staleness tolerance determines which group can afford to wait. Rather than solving this constrained problem directly, we adopt a periodic layer-wise schedule that controls when deep parameters are transmitted. The above formulation highlights the trade-off between model accuracy and communication cost. Reducing communication by limiting parameter transmission may introduce staleness in the global model, particularly for deep parameters that are not updated every round. The design challenge is therefore to determine a scheduling strategy that minimizes communication while preserving sufficient update frequency for critical model components.
+Which group can tolerate being stale is a separate question. A natural argument would be that deep layers change more slowly and therefore tolerate delayed aggregation, and we tested this rather than assuming it. Measuring the per-group relative drift $\lVert\boldsymbol{\theta}_g^{t+1}-\boldsymbol{\theta}_g^{t}\rVert_2 / \lVert\boldsymbol{\theta}_g^{t}\rVert_2$ between consecutive rounds of the synchronous baseline, over four runs and excluding the initialization transition, the deep group drifts at a median of $1.16\times$ the shallow rate and exceeds it in 8 of 12 transitions. The two groups move at comparable rates in this architecture, so we make no claim of differential convergence speed. Prior work on feature transferability \cite{yosinski2014} establishes that early layers learn general representations while deeper layers specialize for the target task, but that concerns transfer between tasks and does not by itself license an assumption about tolerance to stale federated aggregation.
+
+What the schedule does provide is a hard bound: the deferred group is never more than $K-1$ rounds out of date, and the shared feature extractor that every deep layer builds upon is kept consistent across clients at every round. Rather than solving the constrained problem in \eqref{eq:uplink_budget} directly, we adopt a periodic layer-wise schedule that controls when deep parameters are transmitted, and we measure the resulting accuracy cost rather than predicting it. The design question is how large $K$ can be before the accumulated staleness registers as a loss in accuracy.
 
 
-\section{Proposed Methodology}
+\section{Proposed Methodology and Communication Analysis}
 
 We use the term \emph{asynchronous} in a layer-wise rather than a client-wise sense, and the distinction matters. Conventional asynchronous FL removes the round barrier between clients, allowing each client to update the server independently and at its own pace. Our scheme retains the standard synchronous round structure and full client participation; what varies asynchronously is \emph{which parameter groups are synchronized in a given round}. Shallow parameters are aggregated every round, deep parameters every $K$ rounds, so different parts of the model are updated on different schedules and the deep group carries a bounded staleness of at most $K-1$ rounds. The method is therefore complementary to client-wise asynchrony rather than an instance of it, and the two could be combined.
 
-This section describes the experimental framework and the proposed asynchronous layer-wise scheduling strategy. The goal is to isolate the impact of temporal layer-wise communication on learning performance and communication cost.
-
 \subsection{Experimental Design}
 
-We compare three training architectures, centralized training, synchronous FL, and asynchronous layer-wise FL. The centralized setup provides a non-federated reference point, synchronous FL serves as the FedAvg baseline, and the asynchronous variant applies the proposed periodic scheduling. All settings use the same dataset, preprocessing, model architecture, optimizer, and training budget.
+We compare three training architectures: centralized training, synchronous FL, and asynchronous layer-wise FL. The centralized setup provides a non-federated reference point, synchronous FL serves as the FedAvg baseline, and the asynchronous variant applies the proposed periodic scheduling. All settings use the same dataset, preprocessing, model architecture, optimizer, and training budget.
 
-All runs fix the Python, NumPy, and PyTorch random seeds and pin the PyTorch intra-op thread count; a single training step was verified bitwise identical at 1, 2, 3, 4, 8, and 10 threads, so results are invariant to host CPU load and core count. For a given seed the synchronous and asynchronous runs consume identical partitions and have bitwise identical round-zero checkpoints, so the schedules are compared from the same initialization on the same data. The IID synchronous and $K=2$ configurations are repeated at three seeds; the rest are single runs.
+All runs fix the Python, NumPy, and PyTorch random seeds and pin the PyTorch intra-op thread count; a single training step was verified to be bitwise identical at 1, 2, 3, 4, 8, and 10 threads, so results are invariant to host CPU load and core count. For a given seed, the synchronous and asynchronous runs consume identical partitions and have bitwise identical round-zero checkpoints, so the schedules are compared from the same initialization on the same data. The IID synchronous and $K=2$ configurations are repeated at three seeds; the rest are single runs.
 
 \subsection{Dataset and Model}
 
-Experiments use the PTB-XL dataset \cite{wagner2020}, a 12-lead ECG benchmark with 21,799 records sampled at 500 Hz. Each input is a 10-second ECG signal of shape $(5000,12)$. The task is binary classification between Normal and Abnormal rhythms. Folds 1--9 are used for training and fold 10 is used for testing.
+Experiments use the PTB-XL dataset \cite{wagner2020}, a 12-lead ECG benchmark with 21,799 records sampled at 500 Hz. Each input is a 10-second ECG signal of shape $(5000,12)$. The task is binary classification between Normal and Abnormal rhythms. Folds 1--9 are used for training, and fold 10 is used for testing.
 
-The ECGCNN model contains 37,130,657 parameters, approximately 148.5 MB. The shallow group consists of \texttt{conv1}, \texttt{bn1}, \texttt{conv2}, and \texttt{bn2}, totaling 897,936 bytes, or 0.60\% of the model. The deep group consists of \texttt{conv3}, \texttt{bn3}, \texttt{conv4}, \texttt{bn4}, \texttt{fc1}, \texttt{fc2}, and \texttt{fc3}, totaling 147,628,564 bytes, or 99.40\%. This highly imbalanced partition is useful for testing whether infrequent deep synchronization can reduce communication without collapsing accuracy.
+The ECGCNN model has 37,130,657 trainable parameters. Serialized as a \texttt{state\_dict}, the transmitted model state is 148,526,500 bytes, approximately 148.5 MB; this is the quantity that travels on the wire and it includes non-trainable buffers as well as parameters. The shallow group consists of \texttt{conv1}, \texttt{bn1}, \texttt{conv2}, and \texttt{bn2}, totaling 897,936 bytes, or 0.60\% of the transmitted state. The deep group consists of \texttt{conv3}, \texttt{bn3}, \texttt{conv4}, \texttt{bn4}, \texttt{fc1}, \texttt{fc2}, and \texttt{fc3}, totaling 147,628,564 bytes, or 99.40\%. This highly imbalanced partition is useful for testing whether infrequent deep synchronization can reduce communication without collapsing accuracy.
 
 \subsection{Federated Setup}
 
-The federated setting uses three simulated clients. Training runs for four communication rounds, with one participating client per round and one local epoch per selected client. Local training uses Adam with learning rate $10^{-3}$ and batch size 32. Both IID and non-IID partitions are evaluated. The non-IID split uses a Dirichlet distribution with $\alpha=0.5$.
+The federated setting uses three simulated clients, all of which participate in every communication round, with one local epoch per client per round. Training runs for four communication rounds, so a run comprises twelve client-round uploads, which is the multiplier behind the totals in Table~\ref{tab:summary}. Local training uses Adam with learning rate $10^{-3}$ and batch size 32. Both IID and non-IID partitions are evaluated. The non-IID split uses a Dirichlet distribution with $\alpha=0.5$.
 
 \subsection{Asynchronous Layer-Wise Schedule}
 
@@ -483,7 +491,7 @@ The deep group is updated periodically:
 \end{equation}
 where $\widehat{\boldsymbol{\theta}}_D^t$ is the cached deep parameter state from the most recent full update.
 
-The uplink cost at round $t$ is
+The UL cost at round $t$ is
 \begin{equation}
 C_{\text{up}}(t)=|\mathcal{P}_t|
 \left(
@@ -507,8 +515,8 @@ The proposed scheduling mechanism introduces a trade-off between communication e
 \caption{Periodic Asynchronous Layer-Wise FL}
 \label{alg:async_layerwise}
 \begin{algorithmic}[1]
-\State Initialize global model $\boldsymbol{\theta}^{0}=(\boldsymbol{\theta}_{S}^{0},\boldsymbol{\theta}_{D}^{0})$
-\State Initialize cached deep parameters $\widehat{\boldsymbol{\theta}}_{D}^{0}\gets\boldsymbol{\theta}_{D}^{0}$
+\State Initialize global model $\boldsymbol{\theta}^{1}=(\boldsymbol{\theta}_{S}^{1},\boldsymbol{\theta}_{D}^{1})$
+\State Initialize cached deep parameters $\widehat{\boldsymbol{\theta}}_{D}^{1}\gets\boldsymbol{\theta}_{D}^{1}$
 \For{$t=1,\ldots,T$}
     \State Server selects participating clients $\mathcal{P}_{t}$
     \State Server broadcasts full model $\boldsymbol{\theta}^{t}$
@@ -539,9 +547,9 @@ The proposed scheduling mechanism introduces a trade-off between communication e
 
 
 
-\section{Communication and Complexity Analysis}
+\subsection{Communication and Complexity Analysis}
 
-Let $P_S=|\boldsymbol{\theta}_S|$ and $P_D=|\boldsymbol{\theta}_D|$ denote the number of transmitted bytes for shallow and deep parameters, respectively. Let $M_t=|\mathcal{P}_t|$ be the number of participating clients at round $t$. In synchronous FL, each client uploads the full model every round, giving
+Let $P_S$ and $P_D$ denote the number of bytes transmitted for the shallow and deep groups, measured as the serialized size of the corresponding \texttt{state\_dict} entries. This convention counts non-trainable buffers, which are transmitted but carry no gradient, so $P_S+P_D$ exceeds the size implied by the trainable parameter count alone. It is applied identically to both schedules throughout. Let $M_t=|\mathcal{P}_t|$ be the number of participating clients at round $t$. In synchronous FL, each client uploads the full model every round, giving
 \begin{equation}
 C_{\text{sync}}^{\text{up}}
 =
@@ -564,7 +572,7 @@ MT P_S
 +
 M\frac{T}{K}P_D.
 \end{equation}
-The corresponding uplink reduction relative to synchronous FL is
+The corresponding UL reduction relative to synchronous FL is
 \begin{equation}
 \rho_{\text{up}}
 =
@@ -573,13 +581,13 @@ The corresponding uplink reduction relative to synchronous FL is
 \end{equation}
 
 \noindent
-From an optimization perspective, the periodic omission of deep parameter updates can be interpreted as a form of delayed gradient aggregation. While such delays may slow convergence, their impact is mitigated when the delayed components correspond to parameters with slower update dynamics. In the considered ECGCNN architecture, deep layers evolve more gradually compared to shallow layers, making them more tolerant to reduced update frequency. This partially explains why moderate scheduling periods, such as $K=2$, maintain accuracy while achieving significant communication savings.
+From an optimization perspective, the periodic omission of deep parameter updates is a form of delayed aggregation with the delay bounded by $K-1$ rounds. As measured in Section III, the deep group does not evolve more slowly than the shallow group in this architecture, so tolerance to a longer interval is not explained by slower deep-layer dynamics. What bounds the cost is instead how far the model moves over $K-1$ rounds in absolute terms, which is why the penalty is not measurable at $K=2$ and is clear at $K=4$.
 
 Since $P_D\gg P_S$ in the ECGCNN model, the reduction is approximately $1-1/K$. Therefore, $K=2$ yields close to 50\% upload reduction, while $K=4$ yields close to 75\% upload reduction. This matches the empirical reductions of 49.70\% and 74.55\%, respectively.
 
-The computational complexity of local training is unchanged because each client trains the full model after receiving the global model. If one local epoch costs $\mathcal{O}(n_iP)$ for client $i$, where $P=P_S+P_D$, then both synchronous and asynchronous FL have the same local training order. The main reduction is therefore not in floating-point computation but in uplink transmission. On the server side, aggregation cost is reduced during shallow-only rounds from $\mathcal{O}(MP)$ to $\mathcal{O}(MP_S)$, while full rounds retain $\mathcal{O}(MP)$ complexity. Thus, the proposed method reduces both communication load and partial server aggregation cost without changing client-side model execution.
+The computational complexity of local training is unchanged because each client trains the full model after receiving the global model. If one local epoch costs $\mathcal{O}(n_iP)$ for client $i$, where $P=P_S+P_D$, then both synchronous and asynchronous FL have the same local training order. The main reduction is therefore not in floating-point computation but in UL transmission. On the server side, aggregation cost is reduced during shallow-only rounds from $\mathcal{O}(MP)$ to $\mathcal{O}(MP_S)$, while full rounds retain $\mathcal{O}(MP)$ complexity. Thus, the proposed method reduces both communication load and partial server aggregation cost without changing client-side model execution.
 
-From a system perspective, the reduction in uplink volume suggests several potential benefits that we did not measure. Lower peak uplink demand during shallow-only rounds may reduce contention in multi-client deployments, and fewer transmitted bytes may reduce the energy spent on radio activity in battery-powered devices. We note these as expected consequences rather than findings. Our evaluation measures transmitted bytes only; we did not measure device power draw, wall-clock latency, packet loss, or behaviour under unstable network conditions, and byte savings alone do not straightforwardly predict energy savings, since radio startup and association overhead can dominate the per-transmission energy cost.
+From a system perspective, the reduction in UL volume suggests several potential benefits that we did not measure. Lower peak UL demand during shallow-only rounds may reduce contention in multi-client deployments, and fewer transmitted bytes may reduce the energy spent on radio activity in battery-powered devices. We note these as expected consequences rather than findings. Our evaluation measures transmitted bytes only; we did not measure device power draw, wall-clock latency, packet loss, or behaviour under unstable network conditions, and byte savings alone do not straightforwardly predict energy savings, since radio startup and association overhead can dominate the per-transmission energy cost.
 
 \section{Performance Evaluation}
 
@@ -596,68 +604,31 @@ The centralized CNN achieves 84.08\% test accuracy with loss 0.3267 after four e
 \label{fig:centralized}
 \end{figure}
 
-Under IID partitioning, synchronous FL achieves $82.68 \pm 0.98\%$ accuracy over three seeds (81.85\%, 82.44\%, 83.76\%); the run shown in Fig.~\ref{fig:sync_iid} reaches 81.85\% at loss 0.4015. Under non-IID partitioning with Dirichlet $\alpha=0.5$, a single run achieves 84.53\% accuracy with loss 0.3634, as shown in Fig.~\ref{fig:sync_noniid}. The comparable performance under non-IID in this setting is plausibly due to the small number of clients and moderate heterogeneity, but with a single run per partitioning scheme we cannot separate that explanation from seed variation, which alone spans 1.91 percentage points under IID.
+Under IID partitioning, synchronous FL achieves $82.68 \pm 0.98\%$ accuracy over three seeds (81.85\%, 82.44\%, 83.76\%); the run plotted in Fig.~\ref{fig:results_iid} reaches 81.85\% at loss 0.4015. Under non-IID partitioning with Dirichlet $\alpha=0.5$, a single run achieves 84.53\% accuracy with loss 0.3634, plotted in Fig.~\ref{fig:results_noniid}. The comparable performance under non-IID in this setting is plausibly due to the small number of clients and moderate heterogeneity, but with a single run per partitioning scheme we cannot separate that explanation from seed variation, which alone spans 1.91 percentage points under IID.
 
 \begin{figure}[!t]
 \centering
-\input{Tikz-Figs/fig_sync_iid}
-\caption{Synchronous FL under IID partitioning.}
-\label{fig:sync_iid}
+\input{Tikz-Figs/fig_results_iid}
+\caption{IID partitioning: synchronous FedAvg against the proposed schedule at $K=1$, $2$, and $4$. Shallow-only rounds are those not at a multiple of $K$.}
+\label{fig:results_iid}
 \end{figure}
 
 \begin{figure}[!t]
 \centering
-\input{Tikz-Figs/fig_sync_noniid}
-\caption{Synchronous FL under non-IID partitioning.}
-\label{fig:sync_noniid}
+\input{Tikz-Figs/fig_results_noniid}
+\caption{Non-IID partitioning with Dirichlet $\alpha=0.5$: synchronous FedAvg against the proposed schedule at $K=2$ and $K=4$.}
+\label{fig:results_noniid}
 \end{figure}
 
 In both cases, full-model synchronization results in approximately 3.4 GB total communication, highlighting the inefficiency of transmitting all parameters at every round.
 
 \subsection{Asynchronous FL Results}
 
-The case $K=1$ reduces to standard synchronous FL and achieves comparable performance, validating the correctness of the implementation, as shown in Fig.~\ref{fig:async_k1}.
+The case $K=1$ makes every round a full round, so the schedule reduces to standard synchronous FedAvg and should behave comparably, as the $K=1$ trace in Fig.~\ref{fig:results_iid} shows. We describe this as an algorithmic sanity comparison rather than a validation that the two implementations are equivalent. The synchronous baseline and the asynchronous path do not share an aggregation code path: the baseline uses the framework's stock FedAvg, which accumulates in float32, while the asynchronous server accumulates in float64. A strict equivalence check would require both arms to use the same aggregation code and the same accumulation precision.
 
-\begin{figure}[!t]
-\centering
-\input{Tikz-Figs/fig_async_k1}
-\caption{Async FL validation with $K=1$.}
-\label{fig:async_k1}
-\end{figure}
+For $K=2$, the proposed method achieves $83.18 \pm 0.76\%$ accuracy under IID over three seeds and 84.62\% under non-IID in a single run, while reducing upload cost by 49.70\% and total communication by 24.85\%. Both figures show accuracy rising chiefly on rounds that carry a deep update. The pattern is not uniform: round 1 is flat in every $K=2$ run, and round 3 moves by only 0.19 points under non-IID, but the same shallow-only round under IID gains 5.14 points. We do not read that gain as evidence that shallow-only rounds carry comparable information, since at four rounds the model is far from converged and the evaluation is sensitive to small perturbations. Neither does the pattern establish a functional division of labour between shallow and deep layers. The shallow group holds $0.60\%$ of the transmitted state, so shallow-only rounds leave almost all of the model untouched, and the observation is equally consistent with parameter count as with layer role. Distinguishing the two would require a partition-ratio ablation, which we leave to future work.
 
-For $K=2$, the proposed method achieves $83.18 \pm 0.76\%$ accuracy under IID over three seeds and 84.62\% under non-IID in a single run, while reducing upload cost by 49.70\% and total communication by 24.85\%. Fig.~\ref{fig:async_k2_iid} and Fig.~\ref{fig:async_k2_noniid} show that accuracy improves primarily at rounds where full updates are performed, while shallow-only rounds maintain performance with minimal change. We note that this pattern alone does not establish a functional division of labour between shallow and deep layers. The shallow group holds $0.60\%$ of the parameters, so shallow-only rounds necessarily leave the model almost unchanged, and the observation is therefore equally consistent with parameter count as with layer role. Distinguishing the two would require a partition-ratio ablation, which we leave to future work.
-
-\begin{figure}[!t]
-\centering
-\input{Tikz-Figs/fig_async_k2_iid}
-\caption{Async FL with $K=2$ under IID partitioning.}
-\label{fig:async_k2_iid}
-\end{figure}
-
-\begin{figure}[!t]
-\centering
-\input{Tikz-Figs/fig_async_k2_noniid}
-\caption{Async FL with $K=2$ under non-IID partitioning.}
-\label{fig:async_k2_noniid}
-\end{figure}
-
-For $K=4$, upload reduction increases to 74.55\%, but accuracy decreases to 79.21\% under IID and 83.89\% under non-IID. Fig.~\ref{fig:async_k4_iid} and Fig.~\ref{fig:async_k4_noniid} show extended plateaus during shallow-only rounds, followed by sharp improvements when deep updates occur. This behavior reflects increased staleness in deep parameters, which slows convergence and reduces final accuracy.
-
-\begin{figure}[!t]
-\centering
-\input{Tikz-Figs/fig_async_k4_iid}
-\caption{Async FL with $K=4$ under IID partitioning.}
-\label{fig:async_k4_iid}
-\vspace{-0.2cm}
-\end{figure}
-
-\begin{figure}[!t]
-\centering
-\input{Tikz-Figs/fig_async_k4_noniid}
-\caption{Async FL with $K=4$ under non-IID partitioning.}
-\label{fig:async_k4_noniid}
-\vspace{-0.2cm}
-\end{figure}
+For $K=4$, upload reduction increases to 74.55\%, but accuracy decreases to 79.21\% under IID and 83.89\% under non-IID. The $K=4$ traces in Fig.~\ref{fig:results_iid} and Fig.~\ref{fig:results_noniid} sit flat through the three shallow-only rounds and then rise sharply at round 4, the single round carrying a deep update. This behavior reflects increased staleness in deep parameters, which slows convergence and reduces final accuracy.
 
 \subsection{Discussion of Results}
 \begin{table}[!t]
@@ -683,23 +654,19 @@ Async $K=4$ non-IID & 83.89 & 432.64 & 74.55\% \\
 \bottomrule
 \end{tabular}
 \end{table}
-Upload volume is measured identically for both schedules, as the serialized size of the full \texttt{state\_dict}. Counting only trainable parameters omits the BatchNorm running statistics, which are transmitted but carry no gradient, understating each model by 3{,}872 bytes and a four-round, three-client run by 46{,}464 bytes. That is the entire apparent difference between the synchronous and $K=1$ configurations; under a single convention the two are identical, as they must be, since $K=1$ is synchronous FedAvg in communication terms.
+Upload volume uses the convention defined in Section IV-E for both schedules. Under it the synchronous and $K=1$ configurations are identical in communication terms, as they must be, since $K=1$ makes every round a full round.
 
-Table~\ref{tab:summary} summarizes the results. Three key observations emerge. First, accuracy gains are temporally aligned with rounds that include deep parameter updates. Second, $K=2$ provides the best trade-off, achieving nearly 50\% reduction in upload cost while maintaining accuracy close to synchronous FL. Third, accuracy differences between synchronous FedAvg and asynchronous $K=2$ under IID partitioning are small relative to seed-to-seed variation. Over three seeds the synchronous baseline alone spans 1.91 percentage points (81.85\% to 83.76\%), which is wider than the mean paired difference of $+0.50$ percentage points between the two schedules ($p=0.31$). The asynchronous schedule is at least as accurate on every seed tested, but the margin is small and dominated by a single seed. The scheduling change is therefore best characterised as accuracy-neutral at this federation size rather than accuracy-improving, and the communication saving is obtained without a measurable accuracy penalty. The single non-IID pair (84.62\% versus 84.53\%) is consistent with this reading but, being one run per configuration, does not by itself establish robustness under heterogeneity.
+Table~\ref{tab:summary} summarizes the results. Three key observations emerge. First, accuracy gains are temporally aligned with rounds that include deep parameter updates. Second, $K=2$ provides the best trade-off, achieving nearly 50\% reduction in upload cost while maintaining accuracy close to synchronous FL. Third, accuracy differences between synchronous FedAvg and asynchronous $K=2$ under IID partitioning are small relative to seed-to-seed variation. Over three seeds, the synchronous baseline alone spans 1.91 percentage points (81.85\% to 83.76\%), which is wider than the mean paired difference of $+0.50$ percentage points between the two schedules ($p=0.31$). The asynchronous schedule is at least as accurate on every seed tested, but the margin is small and dominated by a single seed. The scheduling change is therefore best characterised as accuracy-neutral at this federation size rather than accuracy-improving, and the communication saving is obtained without a measurable accuracy penalty. The single non-IID pair (84.62\% versus 84.53\%) is consistent with this reading but, being one run per configuration, does not by itself establish robustness under heterogeneity.
 
-The $K=1$ row is algorithmically identical to synchronous FedAvg, yet Table~\ref{tab:summary} reports a different accuracy; the two differ only in the floating-point precision used to accumulate the aggregation. From bitwise identical initial parameters on identical partitions they diverge by a maximum relative difference of $1.3 \times 10^{-7}$ after one round, which is float32 machine epsilon, yet finish $1.86$ percentage points apart. With four rounds the model is far from converged and such perturbations are amplified rather than damped. This is the same effect that produces the seed-to-seed spread above, and it is why we treat the accuracy column as indicative and rest our claims on the communication column.
+The $K=1$ row is algorithmically identical to synchronous FedAvg, yet Table~\ref{tab:summary} reports a different accuracy; the two differ only in the floating-point precision used to accumulate the aggregation. From bitwise-identical initial parameters on identical partitions, they diverge by a maximum relative difference of $1.3 \times 10^{-7}$ after one round, which is float32 machine epsilon, yet finish $1.86$ percentage points apart. With four rounds, the model is far from converged, and such perturbations are amplified rather than damped. This is the same effect that produces the seed-to-seed spread above, and it is why we treat the accuracy column as indicative and rest our claims on the communication column.
 
-Several limitations bound these results. The federation comprises three clients over four rounds with one local epoch per round, which is small relative to deployed FL systems. The layer partition is fixed a priori and the interval $K$ is constant, with no adaptation to observed layer discrepancy. The shallow group holds only $0.60\%$ of model parameters, so shallow-only rounds carry limited information and the upload saving derives almost entirely from omitting the deep group; this also highlights the need for more balanced partitions or adaptive scheduling in future work. Accuracy is replicated over three seeds only for the IID synchronous and $K=2$ configurations; the non-IID and $K=4$ results are single runs and should be read as indicative. Finally, only upload volume was measured. Energy, latency, and congestion benefits are inferred from reduced transmission volume rather than observed, and are stated as potential system-level consequences.
+Several limitations bound these results. The federation comprises three clients over four rounds with one local epoch per round, which is small relative to deployed FL systems. The layer partition is fixed a priori, and the interval $K$ is constant, with no adaptation to observed layer discrepancy. The shallow group holds only $0.60\%$ of the model parameters, so shallow-only rounds carry limited information, and the upload savings derive almost entirely from omitting the deep group; this also highlights the need for more balanced partitions or adaptive scheduling in future work. Accuracy is replicated over three seeds only for the IID synchronous and $K=2$ configurations; the non-IID and $K=4$ results are single runs and should be read as indicative. The synchronous baseline and the asynchronous arm also accumulate their aggregations at different floating-point precision, so every accuracy comparison between the two carries a perturbation of the size described above, not only the $K=1$ row; this is a further reason the accuracy column is reported as indicative and the claims rest on the communication column, which is unaffected by both seed and precision. Finally, only upload volume was measured. Energy, latency, and congestion benefits are inferred from reduced transmission volume rather than observed, and are stated as potential system-level consequences.
 
 
 
 \section{Conclusion}
 
-In this paper we characterized a fixed-schedule form of layer-wise update scheduling for communication-efficient federated learning on IoT health devices. By partitioning model parameters into shallow and deep groups by parameter mass and synchronizing them at different fixed frequencies, the method reduces uplink communication without architectural modification, without runtime measurement of layer statistics, and without any server-side per-layer state. It therefore applies directly on top of standard FedAvg, which is the property that matters most for severely resource-constrained deployments.
-
-Evaluation on PTB-XL ECG classification demonstrates that $K=2$ achieves a 49.70\% reduction in client upload volume with no accuracy penalty measurable at three seeds, while $K=4$ increases the reduction to 74.55\% at a clear cost in accuracy. The upload reductions are exact consequences of the schedule and the layer partition, and are therefore independent of the seed; the accuracy comparison is not, and is reported with its seed variance.
-
-Several directions remain open. Our evaluation does not include hardware deployment with direct power and latency measurement, a formal convergence analysis under bounded deep-layer staleness, adaptive or learned selection of $K$ and of the layer grouping, or comparison against gradient compression and split-learning baselines \cite{vepakomma2018}. Extending the evaluation to larger federations, additional architectures, and additional datasets is likewise left to future work.
+In this paper, we characterized a fixed-schedule, layer-wise update strategy for communication-efficient federated learning on IoT health devices. By partitioning model parameters into shallow and deep groups by parameter mass and synchronizing them at different fixed frequencies, the method reduces UL communication without architectural modification, without any change to the aggregation rule, and without runtime measurement of layer discrepancy or any adaptive per-layer state at the server. The one piece of server state it does keep is the cached deep-parameter tensor that shallow-only rounds reuse. It therefore applies directly on top of standard FedAvg, which is the property that matters most for severely resource-constrained deployments. Evaluation on PTB-XL ECG classification demonstrates that $K=2$ achieves a 49.70\% reduction in client upload volume with no accuracy penalty measurable at three seeds, while $K=4$ increases the reduction to 74.55\% at a clear cost in accuracy. The upload reductions are exact consequences of the schedule and the layer partition, and are therefore independent of the seed; the accuracy comparison is not, and is reported with its seed variance. Several directions remain open. Our evaluation does not include hardware deployment with direct power and latency measurement, a formal convergence analysis under bounded deep-layer staleness, adaptive or learned selection of $K$ and of the layer grouping, or comparison against gradient compression and split-learning baselines \cite{vepakomma2018}. Extending the evaluation to larger federations, additional architectures, and additional datasets is likewise left to future work.
 
 Overall, the proposed approach provides a simple and practical mechanism for balancing communication efficiency and learning performance in resource-constrained FL deployments.
 

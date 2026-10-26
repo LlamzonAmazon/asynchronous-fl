@@ -1,0 +1,15 @@
+% Generated from results/*/checkpoints/all_metrics.json. Do not hand-edit.
+\begin{tikzpicture}
+\begin{groupplot}[group style={group size=2 by 1, horizontal sep=1.1cm}, xlabel={Round}, xtick={0,1,2,3,4}]
+\nextgroupplot[title={Loss}, ylabel={Loss}, ymin=0.33, ymax=0.72, legend style={at={(0.98,0.98)}, anchor=north east, font=\tiny}]
+\addplot[black,      mark=*] coordinates {(0,0.6911) (1,0.5562) (2,0.4236) (3,0.4867) (4,0.3634)};
+\addplot[red,        mark=triangle*] coordinates {(0,0.6911) (1,0.6912) (2,0.4380) (3,0.4365) (4,0.3728)};
+\addplot[orange!85!black, mark=diamond*] coordinates {(0,0.6911) (1,0.6912) (2,0.6911) (3,0.6911) (4,0.4004)};
+\legend{Sync FedAvg, $K=2$, $K=4$}
+
+\nextgroupplot[title={Accuracy}, ylabel={Accuracy (\%)}, ymin=52, ymax=89]
+\addplot[black,      mark=*] coordinates {(0,56.19) (1,72.07) (2,80.85) (3,79.75) (4,84.53)};
+\addplot[red,        mark=triangle*] coordinates {(0,56.19) (1,56.19) (2,81.57) (3,81.76) (4,84.62)};
+\addplot[orange!85!black, mark=diamond*] coordinates {(0,56.19) (1,56.19) (2,56.19) (3,56.19) (4,83.89)};
+\end{groupplot}
+\end{tikzpicture}
