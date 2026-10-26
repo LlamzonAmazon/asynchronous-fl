@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """
-Emit the results table and every figure quoted in prose,
-computed directly from validated run artifacts.
+Emit the results table and every figure quoted in prose, computed directly
+from validated run artifacts.
 
     python jobs/make_results_table.py
 
-Numbers that appear in the paper are generated here, not retyped.
+Every number that appears in the paper is generated here so that none is
+retyped by hand.
 
-Two conventions are enforced here:
+Two conventions are enforced:
 
   1. ONE BYTE CONVENTION FOR BOTH ARMS. The synchronous counter sums
      `p.numel() for p in model.parameters()`, which omits BatchNorm running
