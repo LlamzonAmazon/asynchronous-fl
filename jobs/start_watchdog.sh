@@ -4,8 +4,8 @@
 #   jobs/start_watchdog.sh <serial-log-path>
 #
 # Exists as its own file because backgrounding from an interactive or
-# tool-driven shell does not reliably survive that shell exiting, even with
-# nohup and disown. Launching from inside a script does.
+# non-interactive shell does not reliably survive that shell exiting, even
+# with nohup and disown. Launching from inside a script does.
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$REPO"
 

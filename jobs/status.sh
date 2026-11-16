@@ -7,7 +7,7 @@ echo "===================== FL REPLICATE STATUS ====================="
 date '+now: %Y-%m-%d %H:%M:%S %Z'
 echo
 echo "--- sleep guard ---"
-if pgrep -x caffeinate >/dev/null; then echo "  caffeinate ACTIVE ($(pgrep -x caffeinate | wc -l | tr -d ' ') holders)"; else echo "  !! NO caffeinate: machine may sleep and stall gRPC"; fi
+if pgrep -x caffeinate >/dev/null; then echo "  caffeinate ACTIVE ($(pgrep -x caffeinate | wc -l | tr -d ' ') holders)"; else echo "  !! NO caffeinate: host may sleep and stall gRPC"; fi
 echo
 echo "--- watchdog ---"
 if pgrep -f "jobs/stall_watchdog.sh" >/dev/null; then

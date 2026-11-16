@@ -19,8 +19,9 @@ class ECGCNN(nn.Module):
     
     Architecture:
     - Shallow layers (Conv1, Conv2): Detect basic waveform features
-    - Middle layers (Conv3): Combine features into heartbeat patterns
-    - Deep layers (Conv4, Dense): Learn diagnosis rules and make predictions
+    - Deep layers (Conv3, Conv4, Dense): Combine features into heartbeat patterns,
+      learn diagnosis rules and make predictions. The layer split used by the
+      asynchronous schedule (SHALLOW_PREFIXES) treats Conv3 as deep.
     """
     
     def __init__(self, num_leads=12, dropout_rate=0.5):
@@ -35,12 +36,12 @@ class ECGCNN(nn.Module):
         
         # ============================================================
         # SHALLOW LAYERS - Detects basic patterns (spikes, dips, curves)
-        # To be updated FREQUENTLY in asynchronous FL 
+        # Uploaded every round in asynchronous FL
         # ============================================================
         
         # Conv1: Looks at very short time windows (0.1 seconds = 50 samples)
         # Input: (batch, 5000, 12)
-        # Output: (batch, 2500, 32)
+        # Output: (batch, 2501, 32)
         self.conv1 = nn.Conv1d(
             in_channels=num_leads, # 12 input leads
             out_channels=32, # Learn 32 different basic patterns
@@ -51,7 +52,7 @@ class ECGCNN(nn.Module):
         self.bn1 = nn.BatchNorm1d(32) # Normalize for stable training
         
         # Conv2: Looks at slightly longer windows (0.2 seconds = 100 samples)
-        # Output: (batch, 1250, 64)
+        # Output: (batch, 1251, 64)
         self.conv2 = nn.Conv1d(
             in_channels=32,
             out_channels=64, # Learn 64 more complex patterns
@@ -62,12 +63,12 @@ class ECGCNN(nn.Module):
         self.bn2 = nn.BatchNorm1d(64)
         
         # ============================================================
-        # MIDDLE LAYER - Combines patterns into heartbeat structures
-        # To be updated MODERATELY in asynchronous FL 
+        # CONV3 - Combines patterns into heartbeat structures
+        # Part of the deep group in the layer split
         # ============================================================
         
         # Conv3: Looks at 1-second windows (500 samples)
-        # Output: (batch, 625, 128)
+        # Output: (batch, 626, 128)
         self.conv3 = nn.Conv1d(
             in_channels=64,
             out_channels=128, # Learn 128 heartbeat patterns
@@ -79,11 +80,11 @@ class ECGCNN(nn.Module):
         
         # ============================================================
         # DEEP LAYER - Learns rhythm analysis and diagnosis rules
-        # To be updated INFREQUENTLY in asynchronous FL 
+        # Uploaded only on full rounds in asynchronous FL
         # ============================================================
         
         # Conv4: Looks at 2-second windows (1000 samples)
-        # Output: (batch, 312, 256)
+        # Output: (batch, 314, 256)
         self.conv4 = nn.Conv1d(
             in_channels=128,
             out_channels=256, # Learn 256 complex rhythm patterns
@@ -94,7 +95,7 @@ class ECGCNN(nn.Module):
         self.bn4 = nn.BatchNorm1d(256)
         
         # Global Average Pooling: Looks at ENTIRE 10-second recording
-        # Collapses time dimension: (batch, 312, 256) -> (batch, 256)
+        # Collapses time dimension: (batch, 314, 256) -> (batch, 256)
         self.global_pool = nn.AdaptiveAvgPool1d(1)
         
         # Dense (Fully Connected) Layers: Make final diagnosis decision
@@ -127,20 +128,20 @@ class ECGCNN(nn.Module):
         # ============================================================
         
         # Conv1 + BatchNorm + ReLU activation
-        x = self.conv1(x) # (batch, 32, 2500)
+        x = self.conv1(x) # (batch, 32, 2501)
         x = self.bn1(x)
         x = F.relu(x) # ReLU: only keep positive activations
         
         # Conv2 + BatchNorm + ReLU
-        x = self.conv2(x) # (batch, 64, 1250)
+        x = self.conv2(x) # (batch, 64, 1251)
         x = self.bn2(x)
         x = F.relu(x)
         
         # ============================================================
-        # MIDDLE LAYER - Combines into heartbeat patterns
+        # CONV3 - Combines into heartbeat patterns
         # ============================================================
         
-        x = self.conv3(x) # (batch, 128, 625)
+        x = self.conv3(x) # (batch, 128, 626)
         x = self.bn3(x)
         x = F.relu(x)
         
@@ -148,7 +149,7 @@ class ECGCNN(nn.Module):
         # DEEP LAYER - Analyze rhythm and diagnose
         # ============================================================
         
-        x = self.conv4(x) # (batch, 256, 312)
+        x = self.conv4(x) # (batch, 256, 314)
         x = self.bn4(x)
         x = F.relu(x)
         

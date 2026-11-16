@@ -64,7 +64,7 @@ def main():
 
     print(f"\nAsync Client {client_id}: starting.")
 
-    # Set client-side seed (same base seed for now for reproducibility)
+    # Set client-side seed (all clients use the same base seed for reproducibility)
     set_seed(getattr(config, "RANDOM_SEED", None))
 
     if client_id < 0 or client_id >= config.NUM_CLIENTS:

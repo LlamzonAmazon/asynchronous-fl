@@ -55,7 +55,7 @@ class AsyncFLConfig:
     # ── ASYNC-SPECIFIC: SCHEDULE SETTINGS ──────────────────────────────
     # Primary experimental variable — controls which rounds are "full" vs
     # "shallow_only". See schedule.py for available schedule types.
-    # In the notation used in the thesis, K = DEEP_EVERY_N_ROUNDS.
+    # In the notation of the paper (paper/main-conference.tex), K = DEEP_EVERY_N_ROUNDS.
     SCHEDULE_TYPE = 'periodic'          # 'periodic' | 'warmup_then_periodic' | 'adaptive_plateau'
     DEEP_EVERY_N_ROUNDS = int(os.environ.get('FL_K', 1))             # Deep-layer sync period K (2 = full rounds at 2,4; shallow at 1,3)
     WARMUP_ROUNDS = 0                   # For warmup_then_periodic schedule

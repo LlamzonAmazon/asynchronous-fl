@@ -90,7 +90,7 @@ def prepare_dataloaders(X_train, y_train, X_test, y_test):
         train_dataset,
         batch_size=config.BATCH_SIZE,
         shuffle=True, # Shuffle training data each epoch
-        num_workers=0 # 0 FOR MAC COMPATIBILITY
+        num_workers=0 # Data loading runs in the main process for portability across spawn-based platforms
     )
     
     # Validation dataset loader used to monitor model performance during training

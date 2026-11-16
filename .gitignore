@@ -18,7 +18,7 @@ __pycache__/
 
 # Results
 async-federated/
-centralized/
+results/centralized/
 sync-federated/
 *.pth
 
@@ -29,12 +29,9 @@ results/sync-federated_s*/
 results/async-federated/*_s*/
 jobs/logs/
 
-
-
-# Dead / partial run directories and Spotlight marker
+# Partial or invalidated run directories, and the indexing marker
 results/_*/
 results/.metadata_never_index
-
 
 # LaTeX build artifacts
 *.aux

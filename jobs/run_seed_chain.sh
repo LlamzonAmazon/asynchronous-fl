@@ -19,9 +19,9 @@ set -uo pipefail
 : "${FL_STAGES:=both}"
 
 # Cap PyTorch intra-op threads per process. A run launches 4 processes and
-# each one otherwise defaults to the full core count, so the host
-# ends up 4x oversubscribed. Verified bitwise identical at 1, 2, 3, 4, 8 and 10
-# threads (jobs/precheck_threads.py), so this is numerically free.
+# each process otherwise defaults to the host core count, which oversubscribes
+# the CPU 4x. Results are bitwise identical at 1, 2, 3, 4, 8 and 10 threads
+# (jobs/precheck_threads.py), so the cap does not change the numerics.
 : "${FL_NUM_THREADS:=3}"
 
 export FL_SEED FL_K FL_PORT FL_NUM_THREADS
@@ -69,11 +69,10 @@ run_stage() {  # $1 = label, $2 = script, $3 = expected artifact
   fi
 
   # The artifact existing is necessary but not sufficient. A run whose clients
-  # died mid-way still writes a final metrics file and still reports an
-  # accuracy, which is more dangerous than an obvious crash because the number
-  # looks usable. A run can end this way: two of three
-  # clients died of gRPC "Socket closed" after round 2 and the last two rounds
-  # ran on a single client.
+  # disconnected mid-way (for example, gRPC "Socket closed" after round 2) still
+  # writes a final metrics file and still reports an accuracy, but the later
+  # rounds ran on fewer clients. The reported number looks usable, so the run
+  # is validated before it is accepted.
   if "$PY" jobs/validate_run.py "$run_dir" >/dev/null 2>&1; then
     log "$label: COMPLETE (exit $rc ignored; artifact present and validated)"
     return 0

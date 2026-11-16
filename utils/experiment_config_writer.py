@@ -15,7 +15,7 @@ import torch
 def write_centralized_config(results_dir: Path, config) -> None:
     """Write experiment_config.txt for a centralized run."""
     lines = [
-        "# Centralized training — experiment config reminder",
+        "# Centralized training: experiment config record",
         f"# Generated: {datetime.now().isoformat()}",
         "",
         f"RUN_ID = {getattr(config, 'RUN_ID', 'N/A')}",
@@ -43,7 +43,7 @@ def write_centralized_config(results_dir: Path, config) -> None:
 def write_sync_config(results_dir: Path, config) -> None:
     """Write experiment_config.txt for a synchronous FL run."""
     lines = [
-        "# Synchronous FL (FedAvg) — experiment config reminder",
+        "# Synchronous FL (FedAvg): experiment config record",
         f"# Generated: {datetime.now().isoformat()}",
         "",
         f"RUN_ID = {getattr(config, 'RUN_ID', 'N/A')}",
@@ -80,7 +80,7 @@ def write_sync_config(results_dir: Path, config) -> None:
 def write_async_config(results_dir: Path, config) -> None:
     """Write experiment_config.txt for an asynchronous FL run."""
     lines = [
-        "# Asynchronous layer-wise FL — experiment config reminder",
+        "# Asynchronous layer-wise FL: experiment config record",
         f"# Generated: {datetime.now().isoformat()}",
         "",
         f"RUN_ID = {getattr(config, 'RUN_ID', 'N/A')}",
@@ -121,4 +121,4 @@ def _write_config_file(results_dir: Path, lines: list) -> None:
     results_dir.mkdir(parents=True, exist_ok=True)
     path = results_dir / "experiment_config.txt"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(f"Experiment config reminder saved: {path}")
+    print(f"Experiment config saved: {path}")

@@ -1,18 +1,13 @@
 \documentclass[10pt,conference]{IEEEtran}
-% IEEE Conference eXpress states hard minimum margins for US Letter:
-% top 0.75in, bottom 1.0in, sides 0.625in. IEEEtran's stock letterpaper
-% geometry gives a 0.652in top margin, which is UNDER that minimum, so the
-% margins are set explicitly. Each value clears the minimum with slack, and
-% this spec was chosen because it is the one that holds the paper at 7 pages.
+% Margins are set explicitly because IEEEtran's stock letterpaper geometry gives a 0.652in top margin.
+% The conference minimums for US Letter are top 0.75in, bottom 1.0in, sides 0.625in; the values below clear them.
 \usepackage[top=0.78in,bottom=1.05in,left=0.65in,right=0.65in]{geometry}
 \IEEEoverridecommandlockouts
-% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
 \usepackage{algorithm}
 \usepackage{algpseudocode}
 \usepackage{cite}
 \usepackage{amsmath,amssymb,amsfonts}
 
-%\usepackage{algorithmic}
 \usepackage{graphicx}
 \usepackage{textcomp}
 \usepackage{xcolor}
@@ -26,15 +21,11 @@
 \usepackage{balance}
 \usepackage{tabularx,multirow,booktabs,array}
 
-%\usepackage{tikz}
-%\usepackage{algorithm}
-%\usepackage{algorithmic}
 
 
 
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric,arrows.meta,positioning,calc,fit,backgrounds,decorations.markings}
-%\usetikzlibrary{arrows.meta,positioning,shapes,fit}
 \usepackage{pgfplots}
 \pgfplotsset{compat=1.18}
 \usepgfplotslibrary{groupplots}
@@ -67,29 +58,14 @@
 }
 
 
-% ---------------------------------------------------------------------------
-% Float spacing. Tightens the vertical gap between stacked figures so the
-% results figures pack more densely and the bibliography pulls back onto p.6.
+% Float spacing: reduces the vertical gap between stacked floats.
 % IEEEtran defaults are floatsep 10.2pt, textfloatsep 18.6pt, abovecaptionskip 6pt.
-%
-% NOTCH 1 (active): moderate. Roughly one figure row reclaimed.
-% NOTCH 2: aggressive. Uncomment the second block and comment out the first if
-%          notch 1 leaves a reference stranded on the last page. Verified to
-%          compile with zero overfull vboxes.
-% ---------------------------------------------------------------------------
 \makeatletter
-% --- notch 1: moderate ---
 \setlength{\floatsep}{5pt plus 2pt minus 1pt}
 \setlength{\textfloatsep}{12pt plus 2pt minus 3pt}
 \setlength{\dblfloatsep}{5pt plus 2pt minus 1pt}
 \setlength{\dbltextfloatsep}{12pt plus 2pt minus 3pt}
 \setlength{\abovecaptionskip}{4pt}
-% --- notch 2: aggressive ---
-% \setlength{\floatsep}{3pt plus 1pt minus 1pt}
-% \setlength{\textfloatsep}{8pt plus 2pt minus 2pt}
-% \setlength{\dblfloatsep}{3pt plus 1pt minus 1pt}
-% \setlength{\dbltextfloatsep}{8pt plus 2pt minus 2pt}
-% \setlength{\abovecaptionskip}{2pt}
 \makeatother
 
 \begin{document}
@@ -98,7 +74,6 @@
 \thanks{This work is supported by JSPS KAKENHI Grant Numbers
 JP25K07743 and JP23K24905, Japan.}}
 
-%
 
 
 \author{
@@ -139,7 +114,6 @@ Federated Learning (FL) enables collaborative model training across distributed 
 
 Standard FL, particularly Federated Averaging (FedAvg) \cite{mcmahan2017}, follows a synchronous round-based protocol where clients download the global model, perform local training, and upload the complete updated model to the server. For deep ECG classifiers with millions of parameters, repeated full-model uploads dominate training cost \cite{konecny2016}. This is especially problematic for IoT health devices, where Uplink (UL) bandwidth, energy, and connectivity are constrained.
 
-%In addition to bandwidth constraints, communication inefficiency directly impacts energy consumption and system latency in IoT health deployments. Frequent UL transmissions drain battery-operated wearable devices and increase training delay under intermittent connectivity. Moreover, network variability across devices introduces additional inefficiencies in synchronous protocols, where faster clients remain idle while waiting for slower participants. These limitations highlight the need for communication-aware learning strategies that reduce unnecessary transmissions without sacrificing model performance.
 
 Communication inefficiency also affects energy consumption and latency in IoT health deployments, where frequent UL transmissions draw on battery-powered devices and can increase training delay. This motivates communication-aware learning strategies that reduce unnecessary transmissions without sacrificing performance \cite{konecny2016strategies,tariq2024}; we address the transmitted volume directly and treat the downstream energy and latency effects as motivation rather than as measured outcomes.
 
@@ -222,42 +196,6 @@ node[pos=0.58, below, sloped, font=\tiny]{$\theta$ update} (srv.south west);
 \end{figure}
 
 
-% \begin{figure}[t]
-% \centering
-% \begin{tikzpicture}[
-% font=\scriptsize,
-% node distance=0.9cm,
-% box/.style={draw, rounded corners, align=center, minimum width=1.45cm, minimum height=0.55cm},
-% server/.style={box, fill=blue!10},
-% client/.style={box, fill=green!10},
-% shallow/.style={box, fill=orange!15},
-% deep/.style={box, fill=red!10},
-% arr/.style={->, thick}
-% ]
-% \node[server] (srv) at (0,0) {FL Server\\Global Model};
-% \node[client] (c1) at (-2.7,-1.6) {ECG IoT\\Client 1};
-% \node[client] (c2) at (0,-1.9) {ECG IoT\\Client 2};
-% \node[client] (c3) at (2.7,-1.6) {ECG IoT\\Client 3};
-
-% \node[shallow] (s) at (-1.2,1.2) {Shallow Layers\\sync every round};
-% \node[deep] (d) at (1.4,1.2) {Deep Layers\\sync every $K$ rounds};
-
-% \draw[arr] (srv) -- node[left]{full model} (c1);
-% \draw[arr] (srv) -- node[right]{full model} (c2);
-% \draw[arr] (srv) -- node[right]{full model} (c3);
-
-% \draw[arr, dashed] (c1) -- node[left]{partial/full upload} (srv);
-% \draw[arr, dashed] (c2) -- (srv);
-% \draw[arr, dashed] (c3) -- (srv);
-
-% \draw[arr] (srv) -- (s);
-% \draw[arr] (srv) -- (d);
-
-% \node[align=center] at (0,-3.0) {Layer-wise temporal scheduling reduces UL cost while preserving standard FL operation.};
-% \end{tikzpicture}
-% \caption{Big-picture view of the proposed asynchronous layer-wise FL framework for IoT health devices.}
-% \label{fig:big_picture}
-% \end{figure}
 
 
 \begin{figure}[t]
@@ -326,7 +264,6 @@ arr/.style={-{Latex[length=1.8mm]}, thick}
 \label{fig:big_picture}
 \end{figure}
 
-%From a learning perspective, deep neural networks exhibit layer-wise convergence heterogeneity. Early convolutional layers tend to stabilize rapidly as they capture general signal characteristics, while deeper layers continue adapting to task-specific patterns. This suggests that enforcing uniform synchronization frequency across all layers is suboptimal. Instead, communication schedules can be aligned with the intrinsic learning dynamics of different parameter groups.
 
 In this paper, we study the simplest realizable form of layer-wise update scheduling: a fixed partition of the model into shallow and deep parameter groups, with shallow layers synchronized every round and deep layers every $K$ rounds. Unlike adaptive layer-wise schemes \cite{xu2021layerwise}, the partition and the interval are set in advance, so the server maintains no adaptive per-layer statistics and the method reduces to a scheduling rule over unmodified FedAvg. We characterize the resulting communication and accuracy behaviour on PTB-XL ECG classification under IID and non-IID partitions. At $K=2$ upload cost falls by 49.70\% with accuracy statistically indistinguishable from synchronous FL over three seeds, and at $K=4$ upload reduction reaches 74.55\% with a clear accuracy cost.
 
@@ -666,45 +603,11 @@ In this paper, we characterized a fixed-schedule, layer-wise update strategy for
 
 Overall, the proposed approach provides a simple and practical mechanism for balancing communication efficiency and learning performance in resource-constrained FL deployments.
 
-%\section*{Acknowledgment}
 
 
 \bibliographystyle{IEEEtran}
 \bibliography{ref}
 
 
-% \begin{thebibliography}{10}
-
-% \bibitem{mcmahan2017}
-% B. McMahan, E. Moore, D. Ramage, S. Hampson, and B. A. y Arcas, ``Communication-efficient learning of deep networks from decentralized data,'' in \textit{Proc. AISTATS}, 2017, pp. 1273--1282.
-
-% \bibitem{yang2019}
-% Q. Yang, Y. Liu, T. Chen, and Y. Tong, ``Federated machine learning: Concept and applications,'' \textit{ACM Trans. Intell. Syst. Technol.}, vol. 10, no. 2, pp. 1--19, 2019.
-
-% \bibitem{konecny2016}
-% J. Konečný, H. B. McMahan, D. Ramage, and P. Richtárik, ``Federated optimization: Distributed machine learning for on-device intelligence,'' \textit{arXiv preprint arXiv:1610.02527}, 2016.
-
-% \bibitem{hartmann2018}
-% M. Hartmann, ``Federated learning,'' Master's thesis, Technical University of Munich, 2018.
-
-% \bibitem{yuan2020}
-% X. Yuan, J. Chen, N. Zhang, et al., ``SplitFed learning without sharing raw data for privacy-preserving federated learning in healthcare IoT,'' \textit{IEEE Internet Things J.}, vol. 8, no. 16, pp. 13 351--13 358, 2020.
-
-% \bibitem{tariq2024}
-% M. A. Tariq et al., ``Trustworthy federated learning: A survey,'' \textit{arXiv preprint arXiv:2305.16424}, 2024.
-
-% \bibitem{xie2019asynchronous}
-% C. Xie, S. Koyejo, and I. Gupta, ``Asynchronous federated optimization,'' in \textit{Proc. OPT}, 2019.
-
-% \bibitem{wagner2020}
-% P. Wagner et al., ``PTB-XL, a large publicly available electrocardiography dataset,'' \textit{Sci. Data}, vol. 7, no. 1, p. 154, 2020.
-
-% \bibitem{yosinski2014}
-% J. Yosinski, J. Clune, Y. Bengio, and H. Lipson, ``How transferable are features in deep neural networks?'' in \textit{Proc. NeurIPS}, 2014, pp. 3320--3328.
-
-% \bibitem{paszke2019}
-% A. Paszke et al., ``PyTorch: An imperative style, high-performance deep learning library,'' in \textit{Proc. NeurIPS}, 2019, pp. 8024--8035.
-
-% \end{thebibliography}
 
 \end{document}

@@ -17,8 +17,8 @@ class Config:
     # TRAINING SETTINGS
     BATCH_SIZE = 32 # Number of samples per batch
     
-    # Reduced training budget for all experiments (centralized, sync FL, async FL)
-    # NUM_EPOCHS is kept equal to FL NUM_ROUNDS for fair comparison.
+    # Training budget shared by all arms (centralized, sync FL, async FL):
+    # 4 centralized epochs = 4 FL rounds of 1 local epoch each.
     NUM_EPOCHS = 4  # Effective passes over the data
     
     LEARNING_RATE = 0.001 # How fast the model learns
@@ -27,7 +27,7 @@ class Config:
     RANDOM_SEED = 42 # Global random seed for reproducible centralized experiments
     
     # DEVICE SETTINGS
-    # Automatically use MPS (Apple Silicon GPU) if available, otherwise CPU
+    # Use the MPS accelerator if available, otherwise CPU
     import torch
     if torch.backends.mps.is_available():
         DEVICE = 'mps'

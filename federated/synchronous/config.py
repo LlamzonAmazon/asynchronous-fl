@@ -34,7 +34,7 @@ class FLConfig:
 
     # Data partitioning
     IID = True                # True: IID split, False: non-IID split
-                              # Start with IID for baseline
+                              # IID baseline; the non-IID split uses a Dirichlet partition
     GENERATE_NEW_PARTITION = True   # Regenerate partitioned datasets for new NUM_CLIENTS
                                     # Set to False afterwards to reuse existing .pkl files
     DIRICHLET_ALPHA = 0.5     # Concentration parameter for non-IID Dirichlet splits (see data_partition.py)
@@ -51,14 +51,9 @@ class FLConfig:
     PATIENCE = 5              # Patience in rounds for global early stopping
     
     # DEVICE SETTINGS
-    # NOTE: Using CPU for FL because multiple concurrent processes cause MPS GPU contention
-    # MPS (Apple Silicon GPU) doesn't handle multiple processes well - causes command buffer errors
+    # Clients run on CPU because concurrent client processes contend for the
+    # single MPS device, which produced command buffer errors.
     DEVICE = 'cpu'
-    # Uncomment below to use MPS for single-process training:
-    # if torch.backends.mps.is_available():
-    #     DEVICE = 'mps'
-    # else:
-    #     DEVICE = 'cpu'
     
     # OUTPUT SETTINGS
     # Partition .pkl files are stored in PARTITION_DIR (shared; async reads from here).

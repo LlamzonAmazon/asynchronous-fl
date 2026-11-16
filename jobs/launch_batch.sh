@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# Launch the replicate batch detached, with a host-sleep guard.
+# Launch the replicate batch detached, with a host-sleep guard and the stall watchdog.
 #
 #   jobs/launch_batch.sh
 #
-# Runs every chain SERIALLY under a single caffeinate. Completed stages are
+# Runs every chain serially under a single caffeinate, which prevents host
+# sleep during long runs (a sleeping host stalls gRPC). Completed stages are
 # skipped automatically, so this is safe to re-run after an interruption.
-# Check progress any time with: jobs/status.sh
+# Check progress with: jobs/status.sh
 set -uo pipefail
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; cd "$REPO"
 mkdir -p jobs/logs
@@ -21,8 +22,8 @@ export FL_NUM_THREADS FL_PORT
 STAMP="$(date '+%m%d_%H%M')"
 LOG="jobs/logs/serial_${STAMP}.log"
 
-# One caffeinate, one chain resident at a time. -i prevents idle sleep, -m
-# keeps the disk awake, -s prevents system sleep on AC.
+# One caffeinate and one resident chain at a time. -i prevents idle sleep, -m
+# keeps the disk awake, -s prevents system sleep on AC power.
 nohup caffeinate -ims jobs/run_chains_serial.sh > "$LOG" 2>&1 &
 disown
 
@@ -34,9 +35,6 @@ echo "Log: $LOG"
 # (for instance because the watchdog itself triggered this relaunch), it says
 # so and does nothing.
 jobs/start_watchdog.sh "$LOG" || echo "WARNING: continuing without a watchdog."
-echo
-echo "  chain 1  seed 7   async K=2        ~5h"
-echo "  chain 2  seed 13  sync then async  ~10h"
 echo
 echo "Check with: jobs/status.sh"
 echo "Tail with:  tail -f $LOG"

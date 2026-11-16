@@ -120,7 +120,7 @@ class ECGClient(fl.client.NumPyClient):
         print(f"\n[Client {self.client_id}] Training on {len(self.trainset)} samples.", flush=True)
         
         # ==========================================================================================
-        # Train for local_epochs (CURRENTLY SET TO 1 EPOCH PER ROUND)
+        # Train for local_epochs (config LOCAL_EPOCHS)
         # ==========================================================================================
         for epoch in range(self.local_epochs):
             for batch_idx, (data, target) in enumerate(self.trainloader):

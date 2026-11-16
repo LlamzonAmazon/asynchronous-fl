@@ -31,7 +31,7 @@ def load_client_dataset(client_id: int):
     if not client_data_path.exists():
         raise FileNotFoundError(
             f"Client {client_id} dataset not found at {client_data_path}. "
-            "### MUST RUN DATA PREPARATION FIRST ###"
+            "Run federated/synchronous/run_fl.py first to generate the client partitions."
         )
     
     with open(client_data_path, 'rb') as f:
@@ -56,7 +56,7 @@ def main():
     
     print(f"\nClient {client_id}: starting.")
 
-    # Set client-side seed (same base seed for now for reproducibility)
+    # Set client-side seed (all clients use the same base seed for reproducibility)
     set_seed(getattr(fl_config, "RANDOM_SEED", None))
     
     # Validate client ID

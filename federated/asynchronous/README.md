@@ -2,8 +2,9 @@
 
 ## 1. `config.py` — Settings
 - Mirrors sync config identically for model/training/data settings. 
-- Adds async knobs: `SCHEDULE_TYPE`, `DEEP_EVERY_N_ROUNDS`, `WARMUP_ROUNDS`, `ADAPTIVE_PATIENCE`/`MIN_GAP`/`MAX_GAP`, `SHALLOW_PREFIXES`, `PARTICIPATION_SEED`, `SIMULATED_BANDWIDTH_BPS`. 
-- Training budget parity: `NUM_ROUNDS=15`, `LOCAL_EPOCHS=1`.
+- Adds async knobs: `SCHEDULE_TYPE`, `DEEP_EVERY_N_ROUNDS`, `WARMUP_ROUNDS`, `ADAPTIVE_PATIENCE`/`ADAPTIVE_MIN_GAP`/`ADAPTIVE_MAX_GAP`, `SHALLOW_PREFIXES`, `PARTICIPATION_SEED`, `SIMULATED_BANDWIDTH_BPS`. 
+- `DEEP_EVERY_N_ROUNDS` (K) is read from the `FL_K` environment variable and defaults to 1.
+- Training budget parity: `NUM_ROUNDS=4`, `LOCAL_EPOCHS=1`, `NUM_CLIENTS=3`, `CLIENTS_PER_ROUND=3`.
 
 ## 2. `schedule.py` — Deep-Layer Sending Scheduling Schemes
 - Three schedule classes behind one `DeepSchedule` interface:
@@ -21,7 +22,7 @@
   - The server maintains a deep-parameter cache (`current_deep_params`) and logs when it was last refreshed (`deep_last_update_round`).
   - Per-round staleness in units of rounds is recorded as `deep_staleness_rounds`.
   - Aggregation itself remains pure FedAvg on the parameters that are updated in that round: full FedAvg on full rounds; shallow-only FedAvg plus cached deep parameters on shallow-only rounds.
-  - In the thesis terminology this is a scheduled partial update scheme with tracked staleness, not a fully staleness-weighted async FL method.
+  - In the terminology of the paper (`paper/main-conference.tex`) this is a scheduled partial update scheme with tracked staleness. It applies no staleness weighting.
 - **Communication accounting**: per-round bytes up/down, staleness tracking, schedule metadata
 - **Post-training**: `save_run_metadata()`, `save_network_metrics()` (with sync baseline comparison + `upload_reduction_pct`), `plot_training_curves()` (with full-round vertical markers)
 

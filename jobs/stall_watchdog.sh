@@ -3,16 +3,14 @@
 #
 #   jobs/stall_watchdog.sh <serial-log-path>
 #
-# A chain can deadlock in Flower's gRPC layer and sit
-# at 0% CPU without exiting. This exists to catch that.
+# A chain can deadlock in Flower's gRPC layer (observed at round 2, 0% CPU for
+# many hours) without exiting. This detects that case.
 #
-# Staleness is judged purely by the mtime of the batch log. Every client
-# flushes a progress line every 20 batches, roughly every 8 minutes at the
-# measured 24 s/batch, and three clients train concurrently, so a healthy run
-# touches the log far more often than the threshold. An earlier watchdog tried
-# to infer health by walking the process tree and reading CPU percentages; it
-# misidentified caffeinate as the chain root and would have killed two healthy
-# runs. Log mtime has no such failure mode.
+# Staleness is judged by the mtime of the batch log. Every client flushes a
+# progress line every 20 batches and three clients train concurrently, so a
+# healthy run writes to the log far more often than the stall threshold.
+# Log mtime is used because inferring health from the process tree and CPU
+# percentages can misidentify the chain root (for example, caffeinate).
 #
 # The restart is safe to repeat: completed stages are skipped on the basis of
 # their final metrics file, and an incomplete stage directory is archived

@@ -33,7 +33,7 @@ servers or lists, or reuse of any copyrighted component of this work in other wo
 ---
 ## System Architecture
 
-![Figure 5.1 – System Context Diagram](fl_system_diagram.drawio.png)
+![System context diagram](fl_system_diagram.drawio.png)
 
 ---
 
@@ -157,14 +157,14 @@ asynchronous-fl/
 │
 ├── jobs/
 │   ├── run_seed_chain.sh      # One replicate chain: sync FedAvg baseline, then async K (FL_SEED-scoped)
-│   ├── run_chains_serial.sh   # Run remaining chains one at a time (memory-bound; never concurrent)
-│   ├── launch_batch.sh         # Detached, launcher with a host-sleep guard
+│   ├── run_chains_serial.sh   # Run the replicate chains one at a time (memory-bound; never concurrent)
+│   ├── launch_batch.sh        # Detached launcher: host-sleep guard plus stall watchdog
 │   ├── status.sh              # Replicate status: which seeds/regimes are done, accuracy per run
 │   ├── validate_run.py        # Check a run's artifacts actually match its metrics file
-│   ├── make_results_table.py  # Results table + every number quoted in the paper, from run artifacts
+│   ├── make_results_table.py  # Results table + every reported number, computed from validated run artifacts
 │   ├── precheck_threads.py    # Thread-count determinism and throughput check before a batch
-│   ├── watchdog.py            # Detect and recover a stalled (gRPC ping-timeout) chain
-│   └── stall_watchdog.sh, start_watchdog.sh, queue_seed13.sh
+│   ├── stall_watchdog.sh      # Detect a stalled chain (stale batch log) and restart the batch
+│   └── start_watchdog.sh      # Start the stall watchdog detached from the calling shell
 │
 ├── paper/
 │   ├── main-conference.pdf    # Accepted manuscript (IEEE GLOBECOM 2026)
@@ -178,7 +178,7 @@ asynchronous-fl/
 │   └── ...                    # Config writer, process monitoring, convenience utilities
 │
 ├── LoadData.py                # PTB-XL loader and fold-based splits
-├── THESIS.pdf                 # Undergraduate thesis (the long-form version of the paper)
+├── THESIS.pdf                 # Undergraduate thesis (single-seed results; the paper adds the multi-seed replicates)
 ├── requirements.txt
 ├── .gitignore
 └── README.md
@@ -190,8 +190,8 @@ Results are written to `results/centralized/`, `results/sync-federated/`, and `r
 
 ## Reproducing the runs
 
-All defaults reproduce the single-seed (seed 42) experiments reported in the thesis. The paper's
-multi-seed replicates are driven entirely by environment variables, so the code path is identical
+All defaults reproduce the single-seed (seed 42) experiments reported in the thesis. The multi-seed
+replicates reported in the paper are driven entirely by environment variables, so the code path is identical
 whether or not they are set:
 
 | Variable | Default | Effect |
@@ -212,13 +212,14 @@ FL_SEED=7 FL_K=2 FL_PORT=8081 FL_STAGES=async jobs/run_seed_chain.sh
 jobs/status.sh
 python jobs/validate_run.py results/async-federated/async_IID_4R_3C_1L_K2_s7 --clients 3 --rounds 4
 
-# Regenerate the paper's results table and quoted figures from the run artifacts
+# Regenerate the results table and quoted figures from the run artifacts
 python jobs/make_results_table.py
 ```
 
-Run chains **serially**. Each chain holds roughly 6.5 GB resident and peaks near 8 GB (three clients
-each hold a 1.5 GB partition plus the training graph); two concurrent chains exceed a 16 GB host
-`jobs/run_chains_serial.sh` and `jobs/launch_batch.sh` encode that constraint.
+Run chains **serially**. Each chain holds about 6.5 GB resident and peaks near 8 GB (three clients
+each hold a 1.5 GB partition plus the training graph), so two concurrent chains need more than 13 GB
+and exceed the memory of a 16 GB host. `jobs/run_chains_serial.sh` and `jobs/launch_batch.sh` encode
+that constraint.
 
 ---
 
@@ -233,10 +234,10 @@ each hold a 1.5 GB partition plus the training graph); two concurrent chains exc
 | A2         | Asynchronous FL  | IID               | K=2                       | _Observe_ benefits & tradeoffs of asynchronous FL in **ideal** IoT device data distributions. |
 | A3         | Asynchronous FL  | IID               | K=4                       | _Observe_ benefits & tradeoffs of asynchronous FL in **ideal** IoT device data distributions. |
 | S2         | Synchronous FL   | non-IID           |                           | _Establish_ baseline FL network communication metrics in **realistic** IoT device data distributions. |
-| A1         | Asynchronous FL  | non-IID           | K=2                       | _Observe_ benefits & tradeoffs of asynchronous FL in **realistic** IoT device data distributions. |
-| A2         | Asynchronous FL  | non-IID           | K=4                       | _Observe_ benefits & tradeoffs of asynchronous FL in **realistic** IoT device data distributions. |
+| A4         | Asynchronous FL  | non-IID           | K=2                       | _Observe_ benefits & tradeoffs of asynchronous FL in **realistic** IoT device data distributions. |
+| A5         | Asynchronous FL  | non-IID           | K=4                       | _Observe_ benefits & tradeoffs of asynchronous FL in **realistic** IoT device data distributions. |
 
-- **Controls:** Model (ecg_cnn.py), optimizer (Adam), batch size, init partitions, random seed, training epochs, aggregation, evaluation pipeline, 
+- **Controls:** Model (ecg_cnn.py), optimizer (Adam), batch size, init partitions, random seed, training epochs, aggregation, evaluation pipeline.
 
 ---
 

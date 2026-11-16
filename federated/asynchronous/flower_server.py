@@ -9,7 +9,7 @@ This module implements the proposed method and contains:
     save_run_metadata.
 
 Round type (full / shallow_only) is decided by a pluggable DeepSchedule
-object — the strategy itself contains no "if N == …" scheduling logic.
+object. The strategy itself contains no "if N == …" scheduling logic.
 
 Staleness vs. scheduled partial updates
 ---------------------------------------
@@ -28,9 +28,8 @@ are updated in a given round:
     the deep partition is taken from the cache.
 
 No staleness-based reweighting (for example α = 1 / (τ + 1)) is applied to
-the updates. In the terminology of the thesis, this implementation is a
-scheduled partial update scheme with logged staleness, not a fully
-staleness-weighted asynchronous FL method.
+the updates. In the terminology of the paper (paper/main-conference.tex), this
+implementation is a scheduled partial update scheme with logged staleness.
 """
 
 import hashlib
@@ -586,6 +585,7 @@ def save_network_metrics(
       - |θ_S|, |θ_D| be the byte sizes of the shallow and deep partitions,
         such that full_model_bytes = |θ_S| + |θ_D|.
       - P_t be the set of participating (completed) clients in round t.
+      - S_t be the set of clients selected in round t.
 
     Then the logged quantities are:
       - bytes_up_per_client(t)
@@ -596,7 +596,7 @@ def save_network_metrics(
       - bytes_up_total(t)
           = |P_t| * bytes_up_per_client(t)
       - bytes_down_total(t)
-          = |P_t| * bytes_down_per_client(t)
+          = |S_t| * bytes_down_per_client(t)
       - upload_fraction_of_full(t)
           = bytes_up_per_client(t) / full_model_bytes
           = |θ_S| / (|θ_S| + |θ_D|)    on shallow_only rounds

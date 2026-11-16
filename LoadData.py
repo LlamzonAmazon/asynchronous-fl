@@ -1,5 +1,5 @@
 """
-PTB-XL Dataset Loader for Federated Learning Thesis
+PTB-XL Dataset Loader for Federated Learning
 Loads and preprocesses ECG data from PhysioNet PTB-XL dataset
 """
 
@@ -116,7 +116,7 @@ class PTBXLDataLoader:
             all_classes.update(classes)
 
         # NORM:     Normal ECG
-        # MI:       Myocardial infarction (Abnormal heath repolarization patterns)
+        # MI:       Myocardial infarction
         # STTC:     ST-T wave abnormality (Abnormal ST segment and T wave on an ECG)
         # CD:       Cardiac dysrhythmia (Abnormal heart rhythm)
         # HYP:      Hypertrophy (Abnormal heart chamber thickness)
@@ -151,7 +151,7 @@ def main():
         # Folds 1-9 are used for model training, fold 10 is used for model evaluation (testing)
         # Dataset is folded like this to support different experimental and training setups
         # Each fold has 44% NORM and 56% abnormal (non-NORM) labels 
-        # GOOD class balance for classification training; each fold is representative of the dataset
+        # Class balance is adequate for binary classification training; each fold is representative of the dataset
         test_fold=10
     )
     
@@ -208,55 +208,29 @@ if __name__ == "__main__":
 
 
 '''
+Input geometry and the shallow/deep hypothesis
 
-The model looks at 12 leads of the heart's electrical activity over 10 seconds.
-Each moment is 1/500th of a second (0.002s), so the value of these 12 leads the model is looking at changes every 0.002 seconds.
-The model processes the ENTIRE 10-second sequence at once.
-Shallow layers of the model will look at readings over short windows of time (e.g. 100ms), while deep layers will look at readings over longer windows of time (e.g. 1 second).
+Each recording has 12 leads sampled at 500 Hz for 10 seconds (5000 samples,
+0.002 s per sample). The model (models/ecg_cnn.py) processes a whole recording
+at once.
 
-Shallow layers learn FAST patterns that are calculated over shorter periods of time:
-- Individual spikes
-- Immediate changes
-- "What's happening RIGHT NOW in this small window?"
-- Shallow layers detect the RAW SHAPES
+Shallow layers read short windows (about 0.1 to 0.2 s) and respond to local
+waveform shapes such as spikes, dips and plateaus. Deep layers read longer
+windows (1 s or more) and respond to rhythm and beat-to-beat structure. The
+layer-wise schedule is justified by parameter mass: the deep group holds
+99.40% of the transmitted state, so uploading it every K rounds is what
+reduces upload volume. utils/layer_drift.py measures per-group drift from
+saved checkpoints; in this model the two groups drift at comparable rates.
 
-Deep layers learn SLOW patterns that are calculated over longer periods of time; they can look at larger portions of the 10s recording (5000 samples):
-- Overall rhythm
-- Trends over multiple heartbeats  
-- "What's the big picture across 10 seconds?"
-- Deep layers INTERPRET what those shapes mean
-
-The layer-wise schedule assumes deep layers do not need an update every round because they learn slower, more stable patterns.
-
-
-EXAMPLE ECG MODEL:
+Example forward pass (kernel sizes in samples; see models/ecg_cnn.py):
 
 Input: (5000, 12)
-    ↓
-Conv Layer 1 (Shallow): kernel size = 50 samples
-- Looks at 0.1 second windows
-- Detects: "spike", "dip", "plateau"
-    ↓
-Conv Layer 2 (Shallow): kernel size = 100 samples  
-- Looks at 0.2 second windows
-- Detects: "QRS complex", "T wave", "P wave"
-    ↓
-Conv Layer 3 (Middle): kernel size = 500 samples
-- Looks at 1 second windows
-- Detects: "complete heartbeat", "beat interval"
-    ↓
-Conv Layer 4 (Deep): kernel size = 1000 samples
-- Looks at 2 second windows  
-- Detects: "rhythm pattern", "beat-to-beat variation"
-    ↓
-Global Pooling (Deep): looks at ALL 5000 samples
-- Looks at entire 10 seconds
-- Detects: "overall heart rate", "rhythm regularity", "consistent abnormality"
-    ↓
-Dense Layers (Deep):
-- Combines all patterns
-- Decides: "This is MI" or "This is normal"
-    ↓
-Output Layer: 0.85 (85% abnormal)
-
+    -> Conv 1 (shallow): kernel 50, 0.1 s windows
+    -> Conv 2 (shallow): kernel 100, 0.2 s windows
+    -> Conv 3 (deep): kernel 500, 1 s windows
+    -> Conv 4 (deep): kernel 1000, 2 s windows
+    -> Global average pooling (deep): averages over the full 10 s
+    -> Dense layers (deep): combine the pooled features
+    -> Output: probability of a normal ECG (label 1 = NORM), for example
+       0.85 means 85% probability normal
 '''

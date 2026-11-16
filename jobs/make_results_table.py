@@ -5,8 +5,7 @@ from validated run artifacts.
 
     python jobs/make_results_table.py
 
-Every number that appears in the paper is generated here so that none is
-retyped by hand.
+Every reported number is computed here from validated run artifacts.
 
 Two conventions are enforced:
 

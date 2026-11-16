@@ -6,13 +6,12 @@ Validate that an FL run actually did what its metrics file implies.
 
 Exit status 0 if the run is sound, 1 if it is not.
 
-Motivation: a run can finish, write
-metrics_round_4.json, and reported 82.76% accuracy. Two of its three clients
-had in fact died of gRPC "Socket closed" errors after round 2, so the last two
-rounds were federated learning over a single client. The chain script judged
-the stage complete because the metrics file existed, and nothing else looked.
-An accuracy number from a silently degraded federation is worse than a missing
-one, because it looks usable.
+Motivation: a run whose clients drop out mid-way (for example, gRPC "Socket
+closed" errors after round 2) still writes the final metrics file and reports
+an accuracy, but the later rounds ran on fewer clients. The existence of the
+metrics file alone therefore does not show that the federation stayed intact.
+An accuracy number from a degraded federation is misleading, because it looks
+usable.
 
 Checks performed:
   1. The final round's metrics file exists.
@@ -20,9 +19,9 @@ Checks performed:
      that dies mid-run simply stops producing them.
   3. No gRPC socket teardown or MemoryError appears in the log.
   4. For async runs, every entry in round_metrics.json carries the upload
-     volume of a full client cohort, not a partial one. This is the check
-     that caught the seed 7 failure, because byte totals are recorded from
-     observed messages rather than computed analytically.
+     volume of a full client cohort, not a partial one. Byte totals are
+     recorded from observed messages rather than computed analytically, so
+     this check detects clients that dropped out.
 """
 
 import argparse

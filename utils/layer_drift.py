@@ -4,9 +4,10 @@ Measure per-group parameter drift across FL rounds from existing checkpoints.
 Checks whether the deep group actually changes more slowly than the shallow
 group in this ECGCNN.
 
-Produces the number in Section III of the GLOBECOM 2026 paper reporting that the
-deep group drifts at a median of 1.16x the shallow rate and exceeds it in 8 of 12
-post-initialization transitions. Regenerate that number with:
+Produces the drift ratios reported in Section III of the paper
+(paper/main-conference.tex): the median ratio of deep to shallow drift and the
+number of post-initialization transitions in which the deep group drifts more.
+Regenerate them with:
 
     python utils/layer_drift.py
 

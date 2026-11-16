@@ -7,18 +7,17 @@ Answers two questions before launching the replicate batch:
   1. CORRECTNESS. Does capping PyTorch's intra-op thread count change the
      numerics? Thread count controls how parallel reductions are partitioned
      and float addition is not associative, so in principle it can. Counts
-     1, 4, 8 and 10 were verified bitwise identical;
-     this re-checks those and adds the untested low counts we actually want
-     to use. Any mismatch is a hard stop: it would break comparability with
-     the seed 42 results.
+     1, 4, 8 and 10 were previously verified bitwise identical; this
+     re-checks those and adds the low counts the batch uses. Any mismatch is
+     a hard stop: it would break comparability with the single-seed runs.
 
   2. COST. The runs launch four processes (1 server + 3 clients) and each one
-     independently defaults to torch.get_num_threads(), the core count.
-     That is 40 threads on 10 cores. This measures wall-clock for three
-     concurrent trainers at several thread caps, so the slowdown from capping
-     is a measured number rather than a guess, and it measures scheduling
-     latency on a separate probe process as a proxy for how usable the
-     host schedules other work while a run is going.
+     independently defaults to torch.get_num_threads(), which equals the core
+     count (10 on the reference host). That is 40 threads on 10 cores. This
+     measures wall-clock for three concurrent trainers at several thread
+     caps, which gives the training slowdown from capping. It also measures
+     the scheduling interference under that load: the wake-up latency of a
+     separate low-load probe process.
 
 Nothing here touches results/. It trains on synthetic tensors of the exact
 production shape, so no partition pickle is loaded and no artifact is written.
@@ -52,14 +51,14 @@ DROPOUT_RATE = 0.4
 LEARNING_RATE = 0.001
 SEED = 42
 
-# Thread caps to test. 10 is the current (unset) default.
+# Thread caps to test. 10 is the uncapped default (the core count of the reference host).
 CORRECTNESS_THREADS = [10, 8, 4, 3, 2, 1]
 BENCH_THREADS = [10, 4, 3, 2]
 
 # A real round is 205 batches per client.
 BATCHES_PER_ROUND = 205
 ROUNDS_PER_RUN = 4
-RUNS_REMAINING = 3  # seed 7 async, seed 13 sync, seed 13 async
+RUNS_IN_BATCH = 3  # seed 7 async, seed 13 sync, seed 13 async
 
 
 # ----------------------------------------------------------------------------
@@ -146,9 +145,9 @@ def role_probe(duration):
     """Scheduling-latency probe: measures scheduling interference under load.
 
     Each iteration sleeps 5 ms then does a small fixed amount of work. On an
-    idle machine an iteration lands near its nominal cost. Under CPU
-    starvation the wakeup is delayed and the tail blows out, which is exactly
-    what makes a desktop feel unusable.
+    idle host an iteration takes close to its nominal cost. When the CPU is
+    oversubscribed the wake-up is delayed and the tail latency (p95, max)
+    increases.
     """
     samples = []
     deadline = time.perf_counter() + duration
@@ -221,7 +220,7 @@ def check_correctness():
     if all_match:
         print("PASS. Every thread count produced a bitwise identical model state")
         print("      and an exactly equal loss. Capping threads is numerically free,")
-        print("      so new runs stay comparable to the seed 42 results.")
+        print("      so new runs stay comparable to the earlier single-seed runs.")
     else:
         print("FAIL. Thread count changes the numerics on this host.")
         print("      Do NOT cap threads. Results would not be comparable across runs.")
@@ -254,8 +253,8 @@ def check_cost(batches):
     print("=" * 72)
     print("2. COST: 3 concurrent trainers (a real round's client load)")
     print("=" * 72)
-    print("Probe latency is a separate low-load process. Higher means the")
-    print("host is oversubscribed.")
+    print("Probe latency is measured on a separate low-load process. Higher")
+    print("values mean more scheduling interference from the trainers.")
     print()
     print(f"{'threads':>8} {'total':>8} {'s/batch':>9} {'round':>8} {'3 runs':>8} "
           f"{'probe p50':>10} {'probe p95':>10}")
@@ -266,27 +265,27 @@ def check_cost(batches):
         r = bench_config(t, batches, probe_seconds=max(30, batches * 22))
         rows.append(r)
         round_min = r["per_batch_s"] * BATCHES_PER_ROUND / 60.0
-        runs_h = round_min * ROUNDS_PER_RUN * RUNS_REMAINING / 60.0
+        runs_h = round_min * ROUNDS_PER_RUN * RUNS_IN_BATCH / 60.0
         print(f"{t:>8} {t * 4:>7}t {r['per_batch_s']:>8.2f}s "
               f"{round_min:>7.0f}m {runs_h:>7.1f}h "
-              f"{r['probe_p50_ms']:>9.1f}m {r['probe_p95_ms']:>9.1f}m")
+              f"{r['probe_p50_ms']:>8.1f}ms {r['probe_p95_ms']:>8.1f}ms")
 
     print()
     print("'threads' is the cap per process; the second column is the total")
     print("thread demand across the 4 processes a run actually launches,")
-    print("against 10 physical cores.")
+    print(f"against {os.cpu_count()} logical cores.")
 
     baseline = next(r for r in rows if r["threads"] == 10)
     print()
-    print("Relative to the current uncapped default (10):")
+    print("Relative to the uncapped default (10):")
     for r in rows:
         if r["threads"] == 10:
             continue
         speed = r["per_batch_s"] / baseline["per_batch_s"]
-        resp = baseline["probe_p95_ms"] / r["probe_p95_ms"] if r["probe_p95_ms"] else float("inf")
+        interference = baseline["probe_p95_ms"] / r["probe_p95_ms"] if r["probe_p95_ms"] else float("inf")
         verb = "faster" if speed < 1 else "slower"
         print(f"  FL_NUM_THREADS={r['threads']}: {abs(1 - speed) * 100:>5.1f}% {verb} "
-              f"to train, machine {resp:>4.1f}x more responsive at p95")
+              f"to train, probe p95 latency {interference:>4.1f}x lower")
     return rows
 
 
@@ -311,8 +310,6 @@ def main():
         return role_probe(args.duration)
 
     import torch
-    print(f"repo   : {REPO}")
-    print(f"python : {sys.executable}")
     print(f"torch  : {torch.__version__}")
     print(f"cores  : {os.cpu_count()} logical")
     print(f"default: torch.get_num_threads() == {torch.get_num_threads()} per process, "

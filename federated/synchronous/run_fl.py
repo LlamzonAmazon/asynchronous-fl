@@ -5,13 +5,11 @@ Script used to automate the client and server activity in a federated learning n
 
 2. Starts Flower server in background
 
-3. Runs clients one at a time
-  - Using the Flower simulation mode took up too much memory (50GB+)
-    - Ray's infrastructure overhead 
-    - Concurrent execution of multiple clients
-    - PyTorch's memory management (caching, gradients)
-    - Model + optimizer state duplication
-  - Each client would load their entire partitioned dataset into memory simultaneously
+3. Starts all clients as concurrent processes that connect to the server over gRPC
+  - Clients run as separate processes instead of under Flower's Ray-based
+    simulation engine. In simulation mode this model needed over 50 GB of
+    memory, because the engine keeps every client's dataset, model and
+    optimizer state in one process tree.
 
 4. Saves results
 
